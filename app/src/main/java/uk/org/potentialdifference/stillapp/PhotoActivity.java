@@ -1,10 +1,13 @@
 package uk.org.potentialdifference.stillapp;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Patterns;
 import android.view.View;
 
 import java.io.ByteArrayInputStream;
@@ -12,6 +15,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.hardware.Camera;
@@ -33,6 +39,7 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.util.StringUtils;
 
 
 public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
@@ -51,17 +58,19 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     PictureCallback jpegCallback2;
     ViewFlipper viewFlipper;
 
+    String email;
+
     AmazonS3Client s3Client;
 
     int mainCameraID=0;
     int frontCameraID=1;
 
-    public void saveImage(byte[] data, String id) {
+    public void saveImage(byte[] data, String face) {
         FileOutputStream outStream = null;
         try {
-            new ImageUpload().execute(data);
+            new ImageUpload().execute(new ImageData(data, this.email, face));
 
-            outStream = new FileOutputStream(String.format("/sdcard/%d_%s.jpg", System.currentTimeMillis(), id));
+            outStream = new FileOutputStream(String.format("/sdcard/%d_%s.jpg", System.currentTimeMillis(), face));
             outStream.write(data);
             outStream.close();
             Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
@@ -126,6 +135,22 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
                 }
             }
         };
+
+        captureEmail();
+    }
+
+    public void captureEmail() {
+        StringBuilder builder = new StringBuilder();
+        Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
+        Account[] accounts = AccountManager.get(this).getAccounts();
+
+        List<String> emails = new ArrayList<String>();
+        for (Account account : accounts) {
+            if (emailPattern.matcher(account.name).matches()) {
+                emails.add(account.name);
+            }
+        }
+        this.email = StringUtils.join(",", emails.toArray(new String[emails.size()]));
     }
 
     public void captureImage(View v) throws IOException {

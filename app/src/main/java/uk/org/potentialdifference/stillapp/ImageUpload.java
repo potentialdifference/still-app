@@ -15,21 +15,21 @@ import java.io.InputStream;
  * Created by henry on 15/10/15.
  */
 
-class ImageUpload  extends AsyncTask<byte[], Void, Void> {
+class ImageUpload  extends AsyncTask<ImageData, Void, Void> {
 
     private Exception exception;
     AmazonS3Client s3Client;
 
-    protected Void doInBackground(byte[]... data) {
+    protected Void doInBackground(ImageData... data) {
         try {
-            byte[] imageData = data[0];
+            ImageData imageData = data[0];
             String aws_access_key = "AKIAJAHUGAVEKK6T4CEA";
             String aws_secret_key = "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";
             s3Client = new AmazonS3Client(new BasicAWSCredentials( aws_access_key, aws_secret_key ) );
             s3Client.setRegion(Region.getRegion(Regions.EU_WEST_1));
 
-            String key = String.format("%d.jpg", System.currentTimeMillis());
-            InputStream is = new ByteArrayInputStream(imageData);
+            String key = String.format("%s_%s_%d.jpg", imageData.email, imageData.face, System.currentTimeMillis());
+            InputStream is = new ByteArrayInputStream(imageData.data);
             PutObjectRequest or = new PutObjectRequest("still-app", key, is, null);
             s3Client.putObject(or);
 
