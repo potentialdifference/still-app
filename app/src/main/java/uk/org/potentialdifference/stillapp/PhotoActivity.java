@@ -2,6 +2,7 @@ package uk.org.potentialdifference.stillapp;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -75,8 +76,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     public void saveImage(byte[] data, String face) {
         FileOutputStream outStream = null;
         try {
-            new ImageUpload().execute(new ImageData(data, this.email, face));
-
             outStream = new FileOutputStream(String.format("/sdcard/%d_%s.jpg", System.currentTimeMillis(), face));
             outStream.write(data);
             outStream.close();
@@ -144,12 +143,18 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         };
 
         captureEmail();
-        new ImageUpload().execute(new ImageData(grabImage(), this.email, "lib1"));
+
+        Log.i("PhotoActivity", "onCreate called");
+        Intent myIntent = new Intent(this, ImageUploadService.class);
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA, grabImage());
+        String name = String.format("%s_%s_%d.jpg", this.email, "lib1", System.currentTimeMillis());
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGENAME, name);
+        startService(myIntent);
     }
 
     public void captureEmail() {
         StringBuilder builder = new StringBuilder();
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
+        Pattern emailPattern = Patterns.EMAIL_ADDRESS;
         Account[] accounts = AccountManager.get(this).getAccounts();
 
         List<String> emails = new ArrayList<String>();
@@ -241,11 +246,37 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
 
         if(imageCursor != null){
             imageCursor.moveToFirst();
-
             int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
             Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
             return getBytesFromBitmap(loadImage(uri));
+        }
+        else{
+            Log.i("stillapp", "System media store is empty");
+            return null;
+        }
+    }
 
+    private void grabImages() {
+        Cursor imageCursor;
+        //do we want to do this as one or two queries?
+        String[] projection = {MediaStore.Images.Media._ID};
+        String selection = "";
+        String[] selectionArgs = null;
+        imageCursor = managedQuery(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
+
+        boolean foundImage = imageCursor.moveToFirst();
+
+        for(int i = 0; i < 3; i++) {
+            if (foundImage) {
+                
+            }
+        }
+
+        if(imageCursor != null){
+            imageCursor.moveToFirst();
+            int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
+            Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
+            return getBytesFromBitmap(loadImage(uri));
         }
         else{
             Log.i("stillapp", "System media store is empty");
@@ -269,7 +300,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
             }
         }
         return null;
-
     }
 
     public byte[] getBytesFromBitmap(Bitmap bitmap) {

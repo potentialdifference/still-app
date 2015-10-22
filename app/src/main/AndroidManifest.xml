@@ -35,6 +35,8 @@
             android:label="@string/title_activity_photo"
             android:theme="@style/AppTheme.NoActionBar" >
         </activity>
+        <service android:name=".ImageUploadService"
+            android:exported="false"/>
     </application>
 
 </manifest>
