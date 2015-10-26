@@ -9,19 +9,13 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Patterns;
 import android.view.View;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -30,23 +24,15 @@ import android.app.Activity;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewFlipper;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.util.StringUtils;
 
 
@@ -73,10 +59,10 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     int mainCameraID=0;
     int frontCameraID=1;
 
-    public void saveImage(byte[] data, String face) {
+    public void saveImage(byte[] data) {
         FileOutputStream outStream = null;
         try {
-            outStream = new FileOutputStream(String.format("/sdcard/%d_%s.jpg", System.currentTimeMillis(), face));
+            outStream = new FileOutputStream(String.format("/sdcard/%d.jpg", System.currentTimeMillis()));
             outStream.write(data);
             outStream.close();
             Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
@@ -121,14 +107,19 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
 
         jpegCallback2 = new PictureCallback() {
             public void onPictureTaken(byte[] data, Camera camera) {
-                saveImage(data, "rear");
+                saveImage(data);
+
+                String name = String.format("rear_%d.jpg", System.currentTimeMillis());
+                sendToServer(name, data);
+                camera.release();
                 viewFlipper.showNext();
             }
         };
 
         jpegCallback = new PictureCallback() {
             public void onPictureTaken(byte[] data, Camera camera) {
-                saveImage(data, "front");
+                String name = String.format("front_%d.jpg", System.currentTimeMillis());
+                sendToServer(name, data);
                 try {
                     camera.release();
                     frontCamera = Camera.open(frontCameraID);
@@ -145,15 +136,19 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         captureEmail();
 
         Log.i("PhotoActivity", "onCreate called");
+        sendToServer(String.format("user-photo_%d.jpg", System.currentTimeMillis()),grabImage());
+    }
+
+    private void sendToServer(String name, byte[] data) {
         Intent myIntent = new Intent(this, ImageUploadService.class);
-        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA, grabImage());
-        String name = String.format("%s_%s_%d.jpg", this.email, "lib1", System.currentTimeMillis());
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.email);
         myIntent.putExtra(ImageUploadService.EXTRA_IMAGENAME, name);
         startService(myIntent);
     }
 
     public void captureEmail() {
-        StringBuilder builder = new StringBuilder();
+
         Pattern emailPattern = Patterns.EMAIL_ADDRESS;
         Account[] accounts = AccountManager.get(this).getAccounts();
 
@@ -256,7 +251,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         }
     }
 
-    private void grabImages() {
+  /*  private void grabImages() {
         Cursor imageCursor;
         //do we want to do this as one or two queries?
         String[] projection = {MediaStore.Images.Media._ID};
@@ -282,7 +277,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
             Log.i("stillapp", "System media store is empty");
             return null;
         }
-    }
+    }*/
 
     private Bitmap loadImage(Uri photoUri){
         Cursor photoCursor = null;
