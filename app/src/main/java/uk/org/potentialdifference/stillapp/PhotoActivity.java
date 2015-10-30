@@ -2,6 +2,7 @@ package uk.org.potentialdifference.stillapp;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -9,7 +10,10 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.telephony.TelephonyManager;
 import android.util.Patterns;
+import android.view.Display;
+import android.view.Surface;
 import android.view.View;
 
 import java.io.ByteArrayOutputStream;
@@ -17,70 +21,58 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.ShutterCallback;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.util.StringUtils;
 
 
 public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
-    private final static String DEBUG_TAG = "SurfaceViewExample";
 
-    TextView testView;
 
-    Camera camera;
-    Camera frontCamera;
-    SurfaceView surfaceView;
-    SurfaceHolder surfaceHolder;
 
-    PictureCallback rawCallback;
-    ShutterCallback shutterCallback;
-    PictureCallback jpegCallback;
-    PictureCallback jpegCallback2;
-    ViewFlipper viewFlipper;
 
-    String email;
+    private Camera camera;
+    private Camera frontCamera;
+    private SurfaceView surfaceView;
+    private SurfaceHolder surfaceHolder;
 
-    AmazonS3Client s3Client;
 
-    int mainCameraID=0;
-    int frontCameraID=1;
+    private PictureCallback jpegCallback;
+    private PictureCallback jpegCallback2;
+    private ViewFlipper viewFlipper;
 
-    public void saveImage(byte[] data) {
-        FileOutputStream outStream = null;
-        try {
-            outStream = new FileOutputStream(String.format("/sdcard/%d.jpg", System.currentTimeMillis()));
-            outStream.write(data);
-            outStream.close();
-            Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
 
-        }
-        // Toast.makeText(getApplicationContext(), "Picture Saved", 2000).show();
-        // refreshCamera();
-    }
+
+    private static final int MAIN_CAMERA_ID = 0;
+    private static final int FRONT_CAMERA_ID = 1;
+
+    private static final String TAG = "SurfaceView";
+
+    private boolean previewRunning;
+    private String email;
+    private String deviceId;
+
+
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.d(DEBUG_TAG, "onCreate");
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
         Animation slide_in_left, slide_out_right;
@@ -111,7 +103,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
 
                 String name = String.format("front_%d.jpg", System.currentTimeMillis());
                 sendToServer(name, data);
-                camera.release();
+
                 viewFlipper.showNext();
             }
         };
@@ -121,46 +113,30 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
                 String name = String.format("rear_%d.jpg", System.currentTimeMillis());
                 sendToServer(name, data);
                 try {
-                    camera.release();
-                    frontCamera = Camera.open(frontCameraID);
+                    stopPreviewAndFreeCamera();
+                    frontCamera = Camera.open(FRONT_CAMERA_ID);
                     frontCamera.startPreview();
                     frontCamera.takePicture(null, null, jpegCallback2);
                 } catch (RuntimeException e) {
                     // check for exceptions
-                    System.err.println(e);
+                    Log.e(TAG, "Error taking picture",e);
                     return;
                 }
             }
         };
 
         captureEmail();
+        //use device id if we don't have an email:
+        if(this.email== null || this.email.isEmpty())
+        {
+            captureDeviceId();
+        }
 
         Log.i("PhotoActivity", "onCreate called");
         grabAndSendImages();
     }
 
-    private void sendToServer(String name, byte[] data) {
-        Log.i("PhotoActivity", "will send to server "+name);
-        Intent myIntent = new Intent(this, ImageUploadService.class);
-        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);
-        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.email);
-        myIntent.putExtra(ImageUploadService.EXTRA_IMAGENAME, name);
-        startService(myIntent);
-    }
 
-    public void captureEmail() {
-
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS;
-        Account[] accounts = AccountManager.get(this).getAccounts();
-
-        List<String> emails = new ArrayList<String>();
-        for (Account account : accounts) {
-            if (emailPattern.matcher(account.name).matches()) {
-                emails.add(account.name);
-            }
-        }
-        this.email = StringUtils.join(",", emails.toArray(new String[emails.size()]));
-    }
 
     public void captureImage(View v) throws IOException {
         //take the picture
@@ -186,33 +162,32 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         try {
             camera.setPreviewDisplay(surfaceHolder);
             camera.startPreview();
+            previewRunning = true;
         } catch (Exception e) {
 
         }
     }
 
-    public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-        // Now that the size is known, set up the camera parameters and begin
-        // the preview.
-        refreshCamera();
-    }
 
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.d(DEBUG_TAG, "surfaceCreated");
+        Log.d(TAG, "surfaceCreated");
+
         try {
             // open the camera
-            camera = Camera.open(mainCameraID);
+            camera = Camera.open(MAIN_CAMERA_ID);
         } catch (RuntimeException e) {
             // check for exceptions
+            //todo: better exception handling!
             System.err.println(e);
-            return;
+
         }
+
         Camera.Parameters param;
-        param = camera.getParameters();
+        //param = camera.getParameters();
 
         // modify parameter
-        param.setPreviewSize(352, 288);
-        camera.setParameters(param);
+        //param.setPreviewSize(352, 288);
+        //camera.setParameters(param);
         try {
             // The Surface has been created, now tell the camera where to draw
             // the preview.
@@ -224,17 +199,171 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
             return;
         }
     }
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
+    {
+        // Now that the size is known, set up the camera parameters and begin
+        // the preview.
 
+
+        if (previewRunning)
+        {
+            camera.stopPreview();
+        }
+
+        Camera.Parameters parameters = camera.getParameters();
+        Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
+
+        int displayOrientation = 0;
+        /*if(display.getRotation() == Surface.ROTATION_0)
+        {
+            //parameters.setPreviewSize(height, width);
+            camera.setDisplayOrientation(0);
+        }*/
+
+        if(display.getRotation() == Surface.ROTATION_90)
+        {
+            //yes I know this looks wrong but it seems to work! Should probably understand why!
+            displayOrientation = 270;
+
+        }
+
+        if(display.getRotation() == Surface.ROTATION_180)
+        {
+            //parameters.setPreviewSize(height, width);
+            displayOrientation = 180;
+
+        }
+
+        if(display.getRotation() == Surface.ROTATION_270)
+        {
+            //parameters.setPreviewSize(width, height);
+
+
+            //yes I know this looks wrong but it seems to work! Should probably understand why!
+            displayOrientation = 90;
+
+        }
+        camera.setDisplayOrientation(displayOrientation);
+        List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+        Camera.Size optimal = getBestAspectPreviewSize(displayOrientation,  width, height, parameters, 0.1);
+        parameters.setPreviewSize(optimal.width, optimal.height);
+
+
+
+        camera.setParameters(parameters);
+        refreshCamera();
+    }
     public void surfaceDestroyed(SurfaceHolder holder) {
         // stop preview and release camera
-        camera.stopPreview();
-        camera.release();
-        camera = null;
+        stopPreviewAndFreeCamera();
     }
 
+    //new improved algorithm!
+    public static Camera.Size getBestAspectPreviewSize(int displayOrientation,
+                                                       int width,
+                                                       int height,
+                                                       Camera.Parameters parameters,
+                                                       double closeEnough) {
+        double targetRatio=(double)width / height;
+        Camera.Size optimalSize=null;
+        double minDiff=Double.MAX_VALUE;
+
+        if (displayOrientation == 90 || displayOrientation == 270) {
+            targetRatio=(double)height / width;
+        }
+
+        List<Camera.Size> sizes=parameters.getSupportedPreviewSizes();
+
+        Collections.sort(sizes,
+                Collections.reverseOrder(new SizeComparator()));
+
+        for (Camera.Size size : sizes) {
+            double ratio=(double)size.width / size.height;
+
+            if (Math.abs(ratio - targetRatio) < minDiff) {
+                optimalSize=size;
+                minDiff=Math.abs(ratio - targetRatio);
+            }
+
+            if (minDiff < closeEnough) {
+                break;
+            }
+        }
+
+        return(optimalSize);
+    }
+    /**
+     * Iterates through available preview sizes and returns the one best for current width and height
+     *
+     * Old and apparently less good?!
+     * */
+    private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio=(double)h / w;
+
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = h;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
+
+
+
+
+
+
+
+    private void stopPreviewAndFreeCamera() {
+        if(camera!=null){
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+    }
+
+    /**
+     * Saves the image to sd card
+     * */
+    private void saveImage(byte[] data) {
+        FileOutputStream outStream = null;
+        try {
+            outStream = new FileOutputStream(String.format("/sdcard/%d.jpg", System.currentTimeMillis()));
+            outStream.write(data);
+            outStream.close();
+            Log.d("Log", "onPictureTaken - wrote bytes: " + data.length);
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "File not found saving image", e);
+        } catch (IOException e) {
+            Log.e(TAG, "IO error saving image", e);
+        }
+        // Toast.makeText(getApplicationContext(), "Picture Saved", 2000).show();
+        // refreshCamera();
+    }
     private void grabAndSendImages() {
         Cursor imageCursor;
-        //do we want to do this as one or two queries?
+
         String[] projection = {MediaStore.Images.Media._ID};
         String selection = "";
         String[] selectionArgs = null;
@@ -250,41 +379,15 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
                 Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
                 byte[] data = getBytesFromBitmap(loadImage(uri));
                 sendToServer(String.format("user-photo-%d_%d.jpg",photoCount, System.currentTimeMillis()), data);
-            }while(photoCount<=3 && imageCursor.moveToPrevious());
+            }while(photoCount<3 && imageCursor.moveToPrevious());
         }
         else{
-            Log.i("stillapp", "System media store is empty");
+            Log.i(TAG, "System media store is empty");
 
         }
     }
 
-  /*  private void grabImages() {
-        Cursor imageCursor;
-        //do we want to do this as one or two queries?
-        String[] projection = {MediaStore.Images.Media._ID};
-        String selection = "";
-        String[] selectionArgs = null;
-        imageCursor = managedQuery(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
 
-        boolean foundImage = imageCursor.moveToFirst();
-
-        for(int i = 0; i < 3; i++) {
-            if (foundImage) {
-                
-            }
-        }
-
-        if(imageCursor != null){
-            imageCursor.moveToFirst();
-            int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
-            Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
-            return getBytesFromBitmap(loadImage(uri));
-        }
-        else{
-            Log.i("stillapp", "System media store is empty");
-            return null;
-        }
-    }*/
 
     private Bitmap loadImage(Uri photoUri){
         Cursor photoCursor = null;
@@ -304,10 +407,73 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         return null;
     }
 
-    public byte[] getBytesFromBitmap(Bitmap bitmap) {
+    private byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
         return stream.toByteArray();
     }
 
+    private void captureDeviceId() {
+        TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(Context.TELEPHONY_SERVICE);
+
+        String tmDevice, tmSerial, androidId;
+        tmDevice = "" + tm.getDeviceId();
+        tmSerial = "" + tm.getSimSerialNumber();
+        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+
+        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
+        deviceId = deviceUuid.toString();
+    }
+
+    /**
+     * Sends image data to server
+     * */
+    private void sendToServer(String name, byte[] data) {
+        Log.i("PhotoActivity", "will send to server "+name);
+        Intent myIntent = new Intent(this, ImageUploadService.class);
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);
+        if(this.email == null || this.email.isEmpty()){
+            myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.deviceId);
+        }
+        else {
+            myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.email);
+        }
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGENAME, name);
+        startService(myIntent);
+    }
+
+    /**
+     * Looks up account email or emails and populates this.email
+     * */
+    private void captureEmail() {
+
+        Pattern emailPattern = Patterns.EMAIL_ADDRESS;
+        Account[] accounts = AccountManager.get(this).getAccounts();
+
+        List<String> emails = new ArrayList<String>();
+        for (Account account : accounts) {
+            if (emailPattern.matcher(account.name).matches()) {
+                emails.add(account.name);
+            }
+        }
+        this.email = StringUtils.join(",", emails.toArray(new String[emails.size()]));
+    }
+
+    private static class SizeComparator implements
+            Comparator<Camera.Size> {
+        @Override
+        public int compare(Camera.Size lhs, Camera.Size rhs) {
+            int left=lhs.width * lhs.height;
+            int right=rhs.width * rhs.height;
+
+            if (left < right) {
+                return(-1);
+            }
+            else if (left > right) {
+                return(1);
+            }
+
+            return(0);
+        }
+    }
 }
