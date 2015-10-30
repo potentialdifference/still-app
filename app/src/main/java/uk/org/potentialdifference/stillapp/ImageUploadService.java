@@ -40,9 +40,6 @@ public class ImageUploadService extends IntentService {
 
     protected void onHandleIntent(Intent intent) {
 
-
-
-
         Bundle extras;
 
         extras = intent.getExtras();
@@ -56,7 +53,6 @@ public class ImageUploadService extends IntentService {
                 .build();
         NodeFSService nodeFsService = retrofit.create(NodeFSService.class);
 
-
         Call<NodeFSResponse> createDirectoryCall = nodeFsService.createDirectory(FS_KEY, imageDir);
         Call<NodeFSResponse> createFileCall = nodeFsService.createFile(FS_KEY, imageDir, imageName);
         RequestBody body = RequestBody.create(MediaType.parse("image/jpeg"), imageData);
@@ -69,25 +65,11 @@ public class ImageUploadService extends IntentService {
             Response saveResponse = saveCall.execute().raw();
             Log.i(TAG, "response from save: "+saveResponse.toString());
 
-        }catch(Exception e){
+        } catch(Exception e){
             //handle
             Log.e(TAG, "Error uploading file", e);
         }
 
-
-
-
         Log.i("ImageUploadService", "Uploading " + imageName);
-        //s3Client.putObject(or);
-
-
-
-
-
-
-
-
     }
-
-
 }
