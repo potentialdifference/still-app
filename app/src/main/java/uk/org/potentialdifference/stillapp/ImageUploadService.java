@@ -33,7 +33,7 @@ public class ImageUploadService extends IntentService {
     public static final String EXTRA_IMAGEDATA = "uk.org.potentialdifference.EXTRA_IMAGEDATA";
     public static final String EXTRA_IMAGEDIR = "uk.org.potentialdifference.EXTRA_IMAGEDIR";
     public static final String EXTRA_IMAGENAME = "uk.org.potentialdifference.EXTRA_IMAGENAME";
-    
+
     public ImageUploadService () {
         super("ImageUploadService");
     }

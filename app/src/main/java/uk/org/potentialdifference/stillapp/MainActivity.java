@@ -12,22 +12,27 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
+    final String TAG = "MainActivity";
     Camera mCamera;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     String mCurrentPhotoPath;
+    Uri photoUri;
+
     PictureCallback jpegCallback2 = new PictureCallback() {
         public void onPictureTaken(byte[] data, Camera camera) {
             mCamera.stopPreview();
             mCamera.release();
-            String name = String.format("front_%d.jpg", System.currentTimeMillis());
-            sendToServer(name, data);
+            sendToServer("front", data);
             dispatchTakePictureIntent();
         }
     };
@@ -81,14 +86,39 @@ public class MainActivity extends AppCompatActivity {
             }
             // Continue only if the File was successfully created
             if (photoFile != null) {
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
-                        Uri.fromFile(photoFile));
+                photoUri = Uri.fromFile(photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+
             }
         }
     }
 
-    private void sendToServer(String name, byte[] data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Check which request we're responding to
+        if (requestCode == REQUEST_IMAGE_CAPTURE) {
+            // Make sure the request was successful
+            if (resultCode == RESULT_OK) {
+                try {
+                    InputStream inputStream = getContentResolver().openInputStream(photoUri);
+                    ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+
+                    int bufferSize = 1024;
+                    byte[] buffer = new byte[bufferSize];
+                    int len = 0;
+                    while ((len = inputStream.read(buffer)) != -1) {
+                        byteBuffer.write(buffer, 0, len);
+                    }
+                    sendToServer("rear", byteBuffer.toByteArray());
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+        }
+    }
+
+    private void sendToServer(String tag, byte[] data) {
+        String name = String.format("%s_%d.jpg", tag, System.currentTimeMillis());
         Log.i("PhotoActivity", "will send to server " + name);
         Intent myIntent = new Intent(this, ImageUploadService.class);
         myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);

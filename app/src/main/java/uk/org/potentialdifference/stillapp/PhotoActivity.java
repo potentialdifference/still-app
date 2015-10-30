@@ -347,7 +347,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         String[] selectionArgs = null;
         imageCursor = managedQuery(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
 
-
         if(imageCursor != null){
             int photoCount = 0;
             imageCursor.moveToLast();
@@ -361,10 +360,8 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         }
         else{
             Log.i(TAG, "System media store is empty");
-
         }
     }
-
 
     private Bitmap loadImage(Uri photoUri){
         Cursor photoCursor = null;
