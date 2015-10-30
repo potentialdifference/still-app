@@ -25,7 +25,7 @@ public class ImageUploadService extends IntentService {
     private static final String AWS_ACCESS_KEY    = "AKIAJAHUGAVEKK6T4CEA";
     private static final String AWS_ACCESS_SECRET = "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";
 
-    private static final String BASE_SERVER_URL = "http://192.168.0.4:8080/";
+    private static final String BASE_SERVER_URL = "http://192.168.0.6:8080/";
 
     //note the "key" they are using here is pretty weak security as it is simply put as a path param. But better than nothing
     private static final String FS_KEY = "stillappkey579xtz";
@@ -33,8 +33,7 @@ public class ImageUploadService extends IntentService {
     public static final String EXTRA_IMAGEDATA = "uk.org.potentialdifference.EXTRA_IMAGEDATA";
     public static final String EXTRA_IMAGEDIR = "uk.org.potentialdifference.EXTRA_IMAGEDIR";
     public static final String EXTRA_IMAGENAME = "uk.org.potentialdifference.EXTRA_IMAGENAME";
-
-
+    
     public ImageUploadService () {
         super("ImageUploadService");
     }

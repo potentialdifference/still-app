@@ -1,11 +1,14 @@
 package uk.org.potentialdifference.stillapp;
 
 import android.content.Intent;
+import android.hardware.Camera;
+import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -16,20 +19,34 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
+    Camera mCamera;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     String mCurrentPhotoPath;
+    PictureCallback jpegCallback2 = new PictureCallback() {
+        public void onPictureTaken(byte[] data, Camera camera) {
+            mCamera.stopPreview();
+            mCamera.release();
+            String name = String.format("front_%d.jpg", System.currentTimeMillis());
+            sendToServer(name, data);
+            dispatchTakePictureIntent();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mCamera = Camera.open(1);
+
         Button button = (Button) findViewById(R.id.bPhoto);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                dispatchTakePictureIntent();
+                // Take a picture
+                mCamera.startPreview();
+                mCamera.takePicture(null, null, jpegCallback2);
             }
         });
     }
@@ -69,5 +86,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
         }
+    }
+
+    private void sendToServer(String name, byte[] data) {
+        Log.i("PhotoActivity", "will send to server " + name);
+        Intent myIntent = new Intent(this, ImageUploadService.class);
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);
+        UserIdentifier uid = new UserIdentifier(this.getBaseContext());
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, uid.getIdentifier());
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGENAME, name);
+        startService(myIntent);
     }
 }

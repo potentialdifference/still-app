@@ -16,17 +16,20 @@ import java.util.regex.Pattern;
 public class UserIdentifier {
 
     Context context;
+    public String id;
+    public String email;
 
     public UserIdentifier(Context context) {
         this.context = context;
+        this.id = getDeviceID();
+        this.email = getEmail();
     }
 
     public String getIdentifier() {
-        String id = getEmail();
-        if (id.isEmpty()) {
-            return getDeviceID();
+        if (this.email.isEmpty()) {
+            return this.id;
         } else {
-            return id;
+            return this.email;
         }
     }
 
