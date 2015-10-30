@@ -43,20 +43,14 @@ import com.amazonaws.util.StringUtils;
 
 public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
 
-
-
-
     private Camera camera;
     private Camera frontCamera;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
 
-
     private PictureCallback jpegCallback;
     private PictureCallback jpegCallback2;
     private ViewFlipper viewFlipper;
-
-
 
     private static final int MAIN_CAMERA_ID = 0;
     private static final int FRONT_CAMERA_ID = 1;
@@ -64,10 +58,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     private static final String TAG = "SurfaceView";
 
     private boolean previewRunning;
-    private String email;
-    private String deviceId;
-
-
 
     /** Called when the activity is first created. */
     @Override
@@ -124,13 +114,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
                 }
             }
         };
-
-        captureEmail();
-        //use device id if we don't have an email:
-        if(this.email== null || this.email.isEmpty())
-        {
-            captureDeviceId();
-        }
 
         Log.i("PhotoActivity", "onCreate called");
         grabAndSendImages();
@@ -330,11 +313,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     }
 
 
-
-
-
-
-
     private void stopPreviewAndFreeCamera() {
         if(camera!=null){
             camera.stopPreview();
@@ -388,7 +366,6 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     }
 
 
-
     private Bitmap loadImage(Uri photoUri){
         Cursor photoCursor = null;
         try {
@@ -413,31 +390,15 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
         return stream.toByteArray();
     }
 
-    private void captureDeviceId() {
-        TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(Context.TELEPHONY_SERVICE);
-
-        String tmDevice, tmSerial, androidId;
-        tmDevice = "" + tm.getDeviceId();
-        tmSerial = "" + tm.getSimSerialNumber();
-        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-
-        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
-        deviceId = deviceUuid.toString();
-    }
-
     /**
      * Sends image data to server
      * */
     private void sendToServer(String name, byte[] data) {
-        Log.i("PhotoActivity", "will send to server "+name);
+        Log.i("PhotoActivity", "will send to server " + name);
         Intent myIntent = new Intent(this, ImageUploadService.class);
         myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDATA ,data);
-        if(this.email == null || this.email.isEmpty()){
-            myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.deviceId);
-        }
-        else {
-            myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, this.email);
-        }
+        UserIdentifier uid = new UserIdentifier(this.getBaseContext());
+        myIntent.putExtra(ImageUploadService.EXTRA_IMAGEDIR, uid.getIdentifier());
         myIntent.putExtra(ImageUploadService.EXTRA_IMAGENAME, name);
         startService(myIntent);
     }
@@ -445,19 +406,7 @@ public class PhotoActivity extends Activity implements SurfaceHolder.Callback {
     /**
      * Looks up account email or emails and populates this.email
      * */
-    private void captureEmail() {
 
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS;
-        Account[] accounts = AccountManager.get(this).getAccounts();
-
-        List<String> emails = new ArrayList<String>();
-        for (Account account : accounts) {
-            if (emailPattern.matcher(account.name).matches()) {
-                emails.add(account.name);
-            }
-        }
-        this.email = StringUtils.join(",", emails.toArray(new String[emails.size()]));
-    }
 
     private static class SizeComparator implements
             Comparator<Camera.Size> {
