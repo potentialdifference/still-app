@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.org.potentialdifference.stillapp" >
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="uk.org.potentialdifference.stillapp" >
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -32,8 +31,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".ImageUploadService"
-            android:exported="false"/>
+        <service android:name="uk.org.potentialdifference.stillapp.ImageUploadService" android:exported="false"/>
     </application>
 
 </manifest>

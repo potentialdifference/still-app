@@ -35,14 +35,14 @@ public class ImageUploadService extends IntentService {
     public static final String EXTRA_IMAGENAME = "uk.org.potentialdifference.EXTRA_IMAGENAME";
 
     public ImageUploadService () {
-        super("ImageUploadService");
+        super(ImageUploadService.class.getName());
     }
 
+    @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "onHandleIntent called...");
 
-        Bundle extras;
-
-        extras = intent.getExtras();
+        Bundle extras = intent.getExtras();
         byte[] imageData = extras.getByteArray(EXTRA_IMAGEDATA);
         String imageDir = extras.getString(EXTRA_IMAGEDIR);
         String imageName = extras.getString(EXTRA_IMAGENAME);
@@ -71,5 +71,8 @@ public class ImageUploadService extends IntentService {
         }
 
         Log.i("ImageUploadService", "Uploading " + imageName);
+        Log.i(TAG, "Stopping...");
+
+        this.stopSelf();
     }
 }
