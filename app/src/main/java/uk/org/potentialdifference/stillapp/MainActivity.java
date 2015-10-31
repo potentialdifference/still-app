@@ -28,23 +28,30 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ImageUploadDelegate, PictureCallback {
 
     final String TAG = "MainActivity";
     Camera mCamera;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Uri photoUri;
     Activity mActivity;
+    PictureCallback cb = this;
 
     boolean isTakingPhoto = false;
 
-    PictureCallback jpegCallback2 = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera camera) {
-            Log.d(TAG, "onPictureTaken");
-            isTakingPhoto = false;
-            new PhotoUploader().uploadBytes(mActivity, "front", data);
-            dispatchTakePictureIntent();
+    public void onPictureTaken(byte[] data, Camera camera) {
+        Log.d(TAG, "onPictureTaken");
+        isTakingPhoto = false;
+        try {
+            // We call get to make our asyncTask synchronous
+            new ImageUploadTask(this, this).execute(data).get();
+        } catch (Exception e) {
+            Log.e(TAG, "ImageUploadTask interrupted");
         }
+    }
+
+    public void imageUploadComplete() {
+        dispatchTakePictureIntent();
     };
 
     @Override
@@ -61,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
                 // Take a picture
                 // If this is a double-click, we might have already released the camera
                 if (isTakingPhoto == false) {
-                    mCamera.takePicture(null, null, jpegCallback2);
+                    mCamera.takePicture(null, null, cb);
                     isTakingPhoto = true;
                 }
             }
@@ -158,7 +165,13 @@ public class MainActivity extends AppCompatActivity {
                         if (bm != null) {
                             byte[] bytes = getBytesFromBitmap(bm);
                             Log.d(TAG, "Uploading bytes...");
-                            new PhotoUploader().uploadBytes(mActivity, "rear", bytes);
+                            try {
+                                // We call get to make our asyncTask synchronous
+                                new ImageUploadTask(this, this).execute(bytes).get();
+                            } catch (Exception e) {
+                                Log.e(TAG, "ImageUploadTask interrupted");
+                            }
+                            // new PhotoUploader().uploadBytes(mActivity, "rear", bytes);
                         } else {
                             Log.d(TAG, "Couldn't create bitmap from photo");
                             Toast.makeText(this, "Couldn't create bitmap from photo", Toast.LENGTH_SHORT).show();
@@ -214,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                 int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
                 Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
                 byte[] data = getBytesFromBitmap(loadImage(uri));
-                new PhotoUploader().uploadBytes(this.getBaseContext(), String.format("user-photo-%d", photoCount), data);
+                // new PhotoUploader().uploadBytes(this.getBaseContext(), String.format("user-photo-%d", photoCount), data);
             } while(photoCount<3 && imageCursor.moveToPrevious());
         }
         else{

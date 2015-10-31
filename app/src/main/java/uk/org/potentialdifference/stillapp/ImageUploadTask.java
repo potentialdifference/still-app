@@ -1,7 +1,7 @@
 package uk.org.potentialdifference.stillapp;
 
 import android.content.Context;
-import android.content.Intent;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.squareup.okhttp.MediaType;
@@ -15,16 +15,28 @@ import retrofit.Retrofit;
 import uk.org.potentialdifference.stillapp.nodefs.NodeFSResponse;
 import uk.org.potentialdifference.stillapp.nodefs.NodeFSService;
 
-public class PhotoUploader {
+/**
+ * Created by henry on 31/10/15.
+ */
+public class ImageUploadTask extends AsyncTask<byte[], Void, Void> {
 
-    private String TAG = "PhotoUploader";
+    static String TAG = "ImageUploadTask";
+    ImageUploadDelegate delegate;
+    Context context;
     private static final String BASE_SERVER_URL = "http://192.168.0.6:8080/";
     private static final String FS_KEY = "stillappkey579xtz";
 
-    public void uploadBytes(Context context, String tag, byte[] imageData) {
+    public ImageUploadTask(Context context, ImageUploadDelegate delegate) {
+        this.context = context;
+        this.delegate = delegate;
+    }
+
+    @Override
+    protected Void doInBackground(byte[]... params) {
         Log.d(TAG, "uploadBytes called");
-        String imageName = String.format("%s_%d.jpg", tag, System.currentTimeMillis());
-        UserIdentifier uid = new UserIdentifier(context);
+        byte[] imageData = params[0];
+        String imageName = String.format("%d.jpg", System.currentTimeMillis());
+        UserIdentifier uid = new UserIdentifier(this.context);
         String imageDir = uid.getIdentifier();
 
         Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_SERVER_URL)
@@ -51,5 +63,13 @@ public class PhotoUploader {
         }
 
         Log.i("ImageUploadService", "Uploading " + imageName);
+        return null;
+    }
+    @Override
+    protected void onPostExecute(Void v) {
+        super.onPostExecute(null);
+        if (delegate != null) {
+            delegate.imageUploadComplete();
+        }
     }
 }
