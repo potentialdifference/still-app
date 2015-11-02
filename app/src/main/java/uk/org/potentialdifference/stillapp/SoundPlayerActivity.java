@@ -20,6 +20,7 @@ import android.view.View;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+import java.util.Date;
 
 public class SoundPlayerActivity extends AppCompatActivity implements ImageUploadDelegate{
 
@@ -100,8 +101,15 @@ public class SoundPlayerActivity extends AppCompatActivity implements ImageUploa
         Cursor imageCursor;
 
         String[] projection = {MediaStore.Images.Media._ID};
+
         String selection = "";
+        //String selection = MediaStore.Images.Media.DATE_ADDED + "<?"=
         String[] selectionArgs = null;
+        //String[] selectionArgs = new String[] {String.valueOf(date as long)};
+        //
+        //Cursor cursor = getContentResolver().query(uri, new String[] {MediaStore.Images.Media.DATA}, MediaStore.Images.Media.DATE_ADDED + ">?", new String[] {date.toString()}, MediaStore.Images.Media.DATE_ADDED + " ASC");
+
+
         imageCursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
         Log.d(TAG, "Grabbing images...");
 
