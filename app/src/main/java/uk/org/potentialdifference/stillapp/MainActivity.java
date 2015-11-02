@@ -258,4 +258,9 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
         return stream.toByteArray();
     }
+
+    public void launchSoundPlayer(View view) {
+        Intent intent = new Intent(this, SoundPlayerActivity.class);
+        startActivity(intent);
+    }
 }
