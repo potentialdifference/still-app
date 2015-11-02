@@ -9,6 +9,8 @@ import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -193,50 +195,9 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
 
 
 
-    ///
 
-    private void grabAndSendImages() {
-        Cursor imageCursor;
 
-        String[] projection = {MediaStore.Images.Media._ID};
-        String selection = "";
-        String[] selectionArgs = null;
-        imageCursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
-        Log.d(TAG, "Grabbing and sending images...");
 
-        if(imageCursor != null){
-            int photoCount = 0;
-            imageCursor.moveToLast();
-            do {
-                photoCount++;
-                int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
-                Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
-                byte[] data = getBytesFromBitmap(loadImage(uri));
-                // new PhotoUploader().uploadBytes(this.getBaseContext(), String.format("user-photo-%d", photoCount), data);
-            } while(photoCount<3 && imageCursor.moveToPrevious());
-        }
-        else{
-            Log.i(TAG, "System media store is empty");
-        }
-    }
-
-    private Bitmap loadImage(Uri photoUri){
-        Cursor photoCursor = null;
-        try {
-            String[] projection = {MediaStore.Images.Media.DATA};
-            photoCursor = getContentResolver().query(photoUri, projection, null, null, null);
-            if (photoCursor != null && photoCursor.getCount() == 1) {
-                photoCursor.moveToFirst();
-                String filePath = photoCursor.getString(photoCursor.getColumnIndex(MediaStore.Images.Media.DATA));
-                return BitmapFactory.decodeFile(filePath, null);
-            }
-        }finally{
-            if(photoCursor!=null){
-                photoCursor.close();
-            }
-        }
-        return null;
-    }
 
     private byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -248,4 +209,6 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         Intent intent = new Intent(this, SoundPlayerActivity.class);
         startActivity(intent);
     }
+
+
 }

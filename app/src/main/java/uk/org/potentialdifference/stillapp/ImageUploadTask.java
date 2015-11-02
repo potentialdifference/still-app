@@ -1,6 +1,8 @@
 package uk.org.potentialdifference.stillapp;
 
 import android.content.Context;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -45,6 +47,7 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
     private static final String BASE_SERVER_URL = "https://192.168.0.16:8080/";
     private static final String FS_KEY = "stillappkey579xtz";
     private static final String KEYSTORE_PASSWORD = "still-app";
+    private static final String SAFE_NETWORK_SSID = "\"roomie\"";
 
     public ImageUploadTask(Context context, ImageUploadDelegate delegate) {
         this.context = context;
@@ -53,9 +56,16 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
     @Override
     protected Void doInBackground(UploadJob... params) {
+
+
+
+
         Log.d(TAG, "uploadBytes called");
 
-
+        if(!getWifiSSID().equals(SAFE_NETWORK_SSID)){
+            Log.d(TAG, "not connected to safe wifi network");
+            return null;
+        }
 
         UserIdentifier uid = new UserIdentifier(this.context);
         String imageDir = uid.getIdentifier();
@@ -144,4 +154,17 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
             delegate.imageUploadComplete();
         }
     }
-}
+
+    private String getWifiSSID(){
+            String ssid = "";
+            final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
+            if (connectionInfo != null && !(connectionInfo.getSSID().equals(""))) {
+                ssid = connectionInfo.getSSID();
+
+            }
+            return ssid;
+
+        }
+    }
+
