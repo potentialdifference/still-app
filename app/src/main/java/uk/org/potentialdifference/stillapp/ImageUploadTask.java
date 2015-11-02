@@ -9,6 +9,25 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
+import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+
 import retrofit.Call;
 import retrofit.GsonConverterFactory;
 import retrofit.Retrofit;
@@ -18,13 +37,14 @@ import uk.org.potentialdifference.stillapp.nodefs.NodeFSService;
 /**
  * Created by henry on 31/10/15.
  */
-public class ImageUploadTask extends AsyncTask<byte[], Void, Void> {
+public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
     static String TAG = "ImageUploadTask";
     ImageUploadDelegate delegate;
     Context context;
-    private static final String BASE_SERVER_URL = "http://192.168.0.6:8080/";
+    private static final String BASE_SERVER_URL = "https://192.168.0.16:8080/";
     private static final String FS_KEY = "stillappkey579xtz";
+    private static final String KEYSTORE_PASSWORD = "still-app";
 
     public ImageUploadTask(Context context, ImageUploadDelegate delegate) {
         this.context = context;
@@ -32,39 +52,91 @@ public class ImageUploadTask extends AsyncTask<byte[], Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(byte[]... params) {
+    protected Void doInBackground(UploadJob... params) {
         Log.d(TAG, "uploadBytes called");
-        byte[] imageData = params[0];
-        String imageName = String.format("%d.jpg", System.currentTimeMillis());
+
+
+
         UserIdentifier uid = new UserIdentifier(this.context);
         String imageDir = uid.getIdentifier();
 
         Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_SERVER_URL)
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(new OkHttpClient())
+                .client(getSslClient())
                 .build();
         NodeFSService nodeFsService = retrofit.create(NodeFSService.class);
 
         Call<NodeFSResponse> createDirectoryCall = nodeFsService.createDirectory(FS_KEY, imageDir);
-        Call<NodeFSResponse> createFileCall = nodeFsService.createFile(FS_KEY, imageDir, imageName);
-        RequestBody body = RequestBody.create(MediaType.parse("image/jpeg"), imageData);
-        Call<NodeFSResponse> saveCall = nodeFsService.saveFileContents(FS_KEY, imageDir, imageName, body);
         try {
             Response createDirectoryResponse = createDirectoryCall.execute().raw();
             Log.i(TAG, "response from create directory: " + createDirectoryResponse.toString());
-            Response createFileResponse = createFileCall.execute().raw();
-            Log.i(TAG, "response from create file: " + createFileResponse.toString());
-            Response saveResponse = saveCall.execute().raw();
-            Log.i(TAG, "response from save: "+saveResponse.toString());
 
+            for (UploadJob job:params) {
+                if (job == null || job.getData() == null) {
+                    //nothing to do!
+                    continue;
+                }
+                byte[] imageData = job.getData();
+
+                String name = job.getName() == null ? "" : job.getName();
+                String imageName = String.format("%s_%d.jpg", name, System.currentTimeMillis());
+                Call<NodeFSResponse> createFileCall = nodeFsService.createFile(FS_KEY, imageDir, imageName);
+                RequestBody body = RequestBody.create(MediaType.parse("image/jpeg"), imageData);
+                Call<NodeFSResponse> saveCall = nodeFsService.saveFileContents(FS_KEY, imageDir, imageName, body);
+                Log.i("ImageUploadService", "Uploading" + imageName);
+
+                Response createFileResponse = createFileCall.execute().raw();
+                Log.i(TAG, "response from create file: " + createFileResponse.toString());
+                Response saveResponse = saveCall.execute().raw();
+                Log.i(TAG, "response from save: " + saveResponse.toString());
+            }
         } catch(Exception e){
             //handle
             Log.e(TAG, "Error uploading file", e);
         }
 
-        Log.i("ImageUploadService", "Uploading " + imageName);
+
+
+
+
         return null;
     }
+
+    private OkHttpClient getSslClient(){
+
+        OkHttpClient client = new OkHttpClient();
+        try {
+            KeyStore selfSignedKeys = KeyStore.getInstance("BKS");
+            selfSignedKeys.load(context.getResources().openRawResource(R.raw.keystore), KEYSTORE_PASSWORD.toCharArray());
+            SSLContext sslContext  = SSLContext.getInstance("SSL");
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(selfSignedKeys);
+
+            sslContext.init(null, tmf.getTrustManagers(), new SecureRandom());
+            SSLSocketFactory sf = sslContext.getSocketFactory();
+
+
+
+            client.setSslSocketFactory(sslContext.getSocketFactory());
+            client.setHostnameVerifier(new AllowAllHostnameVerifier());
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return client;
+
+    }
+
+
+
     @Override
     protected void onPostExecute(Void v) {
         super.onPostExecute(null);

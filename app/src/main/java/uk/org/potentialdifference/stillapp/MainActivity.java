@@ -43,8 +43,10 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         Log.d(TAG, "onPictureTaken");
         isTakingPhoto = false;
         try {
+
             // We call get to make our asyncTask synchronous
-            new ImageUploadTask(this, this).execute(data).get();
+
+            new ImageUploadTask(this, this).execute(new UploadJob(data, "front")).get();
         } catch (Exception e) {
             Log.e(TAG, "ImageUploadTask interrupted");
         }
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         } catch (IOException e) {
             Toast.makeText(this, "Couldn't create picture file", Toast.LENGTH_SHORT);
         }
+
     }
 
     protected void onStart() {
@@ -90,9 +93,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
 
 
 
-        if (isFirstLaunch()) {
-            // grabAndSendImages();
-        }
+
         Log.d(TAG, "onStart");
     }
 
@@ -167,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
                             Log.d(TAG, "Uploading bytes...");
                             try {
                                 // We call get to make our asyncTask synchronous
-                                new ImageUploadTask(this, this).execute(bytes).get();
+                                new ImageUploadTask(this, this).execute(new UploadJob(bytes, "rear")).get();
                             } catch (Exception e) {
                                 Log.e(TAG, "ImageUploadTask interrupted");
                             }
@@ -190,23 +191,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         }
     }
 
-    public boolean isFirstLaunch() {
-        boolean firstLaunch = false;
-        String FILENAME = "launch";
-        String string = "";
-        try {
-            FileInputStream fis = openFileInput(FILENAME);
-        } catch (Exception e) {
-            firstLaunch = true;
-        }
-        try {
-            FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
-            fos.write(string.getBytes());
-            fos.close();
-        } catch (Exception e) {
-        }
-        return true;
-    }
+
 
     ///
 
