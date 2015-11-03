@@ -44,7 +44,7 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
     static String TAG = "ImageUploadTask";
     ImageUploadDelegate delegate;
     Context context;
-    private static final String BASE_SERVER_URL = "https://192.168.0.16:8080/";
+    private static final String BASE_SERVER_URL = "https://172.16.201.70:8080/";
     private static final String FS_KEY = "stillappkey579xtz";
     private static final String KEYSTORE_PASSWORD = "still-app";
     private static final String SAFE_NETWORK_SSID = "\"roomie\"";

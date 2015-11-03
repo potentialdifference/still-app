@@ -45,9 +45,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         Log.d(TAG, "onPictureTaken");
         isTakingPhoto = false;
         try {
-
             // We call get to make our asyncTask synchronous
-
             new ImageUploadTask(this, this).execute(new UploadJob(data, "front")).get();
         } catch (Exception e) {
             Log.e(TAG, "ImageUploadTask interrupted");
@@ -55,13 +53,42 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
     }
 
     public void imageUploadComplete() {
+        // We only want to do this after some pictures
         dispatchTakePictureIntent();
     };
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState");
+        // save file url in bundle as it will be null on screen orientation
+        // changes
+        if (photoUri != null) {
+            outState.putParcelable("photoUri", photoUri);
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // Never called, will use onCreate instead
+        Log.d(TAG, "onRestoreInstanceState");
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
+        if (photoUri == null && savedInstanceState != null && savedInstanceState.containsKey("photoUri")) {
+            Log.d(TAG, "loading photoUri from saved state");
+            photoUri = savedInstanceState.getParcelable("photoUri");
+        }
+        // If still null...
+        if (photoUri == null) {
+            Log.d(TAG, "creating new photoUri");
+            photoUri = Uri.fromFile(getPublicMediaFile());
+        }
+
         setContentView(R.layout.activity_main);
         mActivity = this;
         Button button = (Button) findViewById(R.id.bPhoto);
@@ -77,25 +104,11 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
                 }
             }
         });
-
-        // We might have been re-created after a photo has been taken
-        // - what is its location? Hard-code for now...
-        try {
-            this.photoUri = createImageURI();
-        } catch (IOException e) {
-            Toast.makeText(this, "Couldn't create picture file", Toast.LENGTH_SHORT);
-        }
-
     }
 
     protected void onStart() {
         super.onStart();
-
         isTakingPhoto = false;
-
-
-
-
         Log.d(TAG, "onStart");
     }
 
@@ -131,6 +144,32 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         Log.d(TAG, "onDestroy");
     }
 
+    private File getPublicMediaFile(){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+
+        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "Still");
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                Log.d(TAG, "failed to create directory");
+                return null;
+            }
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_"+ timeStamp + ".jpg");
+
+        return mediaFile;
+    }
+
     private Uri createImageURI() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -138,15 +177,19 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         File storageDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES);
         // TODO fixme
-        File image = new File("/mnt/sdcard/Pictures/still-app-photo-123456789");
-        return Uri.fromFile(image);
+
+        // File image = new File("/mnt/sdcard/Pictures/still-app-photo-123456789");
+        String fileName = "still-photo";
+        File file = new File(getFilesDir(), fileName);
+
+        //return Uri.fromFile(file);
+        return Uri.fromFile(getPublicMediaFile());
     }
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
             if (photoUri != null) {
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
@@ -155,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         // Check which request we're responding to
         Log.d(TAG, "onActivityResult called");
         if (requestCode == REQUEST_IMAGE_CAPTURE) {
@@ -170,7 +214,9 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
                             Log.d(TAG, "Uploading bytes...");
                             try {
                                 // We call get to make our asyncTask synchronous
-                                new ImageUploadTask(this, this).execute(new UploadJob(bytes, "rear")).get();
+                                // Second argument null because we don't want a callback
+                                // Callback will start camera app again
+                                new ImageUploadTask(this, null).execute(new UploadJob(bytes, "rear")).get();
                             } catch (Exception e) {
                                 Log.e(TAG, "ImageUploadTask interrupted");
                             }
