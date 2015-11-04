@@ -139,8 +139,14 @@ public class SoundPlayerActivity extends AppCompatActivity implements ImageUploa
 
     private byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
-        return stream.toByteArray();
+        if(bitmap!=null) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+            return stream.toByteArray();
+        }
+        else{
+            return null;
+        }
+
     }
 
 

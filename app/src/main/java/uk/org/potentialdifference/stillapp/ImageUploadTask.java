@@ -22,11 +22,14 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -44,10 +47,14 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
     static String TAG = "ImageUploadTask";
     ImageUploadDelegate delegate;
     Context context;
-    private static final String BASE_SERVER_URL = "https://192.168.0.6:8080/";
+    private static final String SERVER_PROTOCOL = "https";
+    private static final String SERVER_HOSTNAME = "192.168.0.16";
+    private static final String SERVER_PORT = "8080";
+
+
     private static final String FS_KEY = "stillappkey579xtz";
     private static final String KEYSTORE_PASSWORD = "still-app";
-    private static final String SAFE_NETWORK_SSID = "\"roomie\"";
+    private static final String[] SAFE_NETWORK_SSIDS = {"\"roomie\"", "roomie"};
 
     public ImageUploadTask(Context context, ImageUploadDelegate delegate) {
         this.context = context;
@@ -58,8 +65,15 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
     protected Void doInBackground(UploadJob... params) {
 
         Log.d(TAG, "uploadBytes called");
-
-        if(!getWifiSSID().equals(SAFE_NETWORK_SSID)){
+        String wifiId = getWifiSSID();
+        boolean safe = false;
+        for(String id : SAFE_NETWORK_SSIDS){
+            if(id.equals(wifiId)){
+                safe=true;
+                continue;
+            }
+        }
+        if(!safe){
             Log.d(TAG, "not connected to safe wifi network");
             return null;
         }
@@ -67,9 +81,9 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
         UserIdentifier uid = new UserIdentifier(this.context);
         String imageDir = uid.getIdentifier();
 
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_SERVER_URL)
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(String.format("%s://%s:%s", SERVER_PROTOCOL, SERVER_HOSTNAME, SERVER_PORT))
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(getSslClient())
+                .client(getSslClient(context))
                 .build();
         NodeFSService nodeFsService = retrofit.create(NodeFSService.class);
 
@@ -105,31 +119,49 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
         return null;
     }
 
-    private OkHttpClient getSslClient(){
+    private static OkHttpClient getSslClient(Context context){
 
         OkHttpClient client = new OkHttpClient();
-        try {
-            KeyStore selfSignedKeys = KeyStore.getInstance("BKS");
-            selfSignedKeys.load(context.getResources().openRawResource(R.raw.keystore), KEYSTORE_PASSWORD.toCharArray());
-            SSLContext sslContext  = SSLContext.getInstance("SSL");
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(selfSignedKeys);
 
-            sslContext.init(null, tmf.getTrustManagers(), new SecureRandom());
-            SSLSocketFactory sf = sslContext.getSocketFactory();
+        try{
+            //load the certificate containing our trusted CAs
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            InputStream certInputStream = context.getResources().openRawResource(R.raw.server_cert);
+            Certificate ca;
+            try {
+                ca = cf.generateCertificate(certInputStream);
+            }finally{
+                certInputStream.close();
+            }
+
+            //create a trust manager that trusts the CAs in our keystore
+            String keyStoreType = KeyStore.getDefaultType();
+            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("ca", ca);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(keyStore);
+
+            SSLContext sslContext  = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
 
             client.setSslSocketFactory(sslContext.getSocketFactory());
-            client.setHostnameVerifier(new AllowAllHostnameVerifier());
+            //client.setHostnameVerifier(new AllowAllHostnameVerifier());
+            client.setHostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    if(hostname.equals(SERVER_HOSTNAME)){
+                        return true;
+                    }
+                    else {
+                        return false;
+                    }
+                }
+            });
 
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException  | CertificateException | IOException e) {
             e.printStackTrace();
         }
         return client;
