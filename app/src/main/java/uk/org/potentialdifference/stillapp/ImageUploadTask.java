@@ -54,7 +54,7 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
     private static final String FS_KEY = "stillappkey579xtz";
     private static final String KEYSTORE_PASSWORD = "still-app";
-    private static final String[] SAFE_NETWORK_SSIDS = {"\"roomie\"", "roomie"};
+    private static final String[] SAFE_NETWORK_SSIDS = {"roomie", "still"};
 
     public ImageUploadTask(Context context, ImageUploadDelegate delegate) {
         this.context = context;
@@ -184,6 +184,9 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
                 ssid = connectionInfo.getSSID();
 
             }
-            return ssid;
-        }
+            if (ssid.startsWith("\"") && ssid.endsWith("\"")){
+                ssid = ssid.substring(1, ssid.length()-1);
+            }
+                return ssid;
+            }
     }
