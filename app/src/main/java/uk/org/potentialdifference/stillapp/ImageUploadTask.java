@@ -53,7 +53,6 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
 
 
     private static final String FS_KEY = "stillappkey579xtz";
-    private static final String KEYSTORE_PASSWORD = "still-app";
     private static final String[] SAFE_NETWORK_SSIDS = {"roomie", "still"};
 
     public ImageUploadTask(Context context, ImageUploadDelegate delegate) {
