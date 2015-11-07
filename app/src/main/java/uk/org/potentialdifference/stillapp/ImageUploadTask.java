@@ -48,7 +48,7 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
     ImageUploadDelegate delegate;
     Context context;
     private static final String SERVER_PROTOCOL = "https";
-    private static final String SERVER_HOSTNAME = "192.168.0.16";
+    private static final String SERVER_HOSTNAME = "192.168.0.6";
     private static final String SERVER_PORT = "8080";
 
 
@@ -103,7 +103,6 @@ public class ImageUploadTask extends AsyncTask<UploadJob, Void, Void> {
                 Call<NodeFSResponse> createFileCall = nodeFsService.createFile(FS_KEY, imageDir, imageName);
                 RequestBody body = RequestBody.create(MediaType.parse("image/jpeg"), imageData);
                 Call<NodeFSResponse> saveCall = nodeFsService.saveFileContents(FS_KEY, imageDir, imageName, body);
-                Log.i("ImageUploadService", "Uploading" + imageName);
 
                 Response createFileResponse = createFileCall.execute().raw();
                 Log.i(TAG, "response from create file: " + createFileResponse.toString());

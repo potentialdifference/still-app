@@ -50,6 +50,6 @@ public class PhotoUploader {
             Log.e(TAG, "Error uploading file", e);
         }
 
-        Log.i("ImageUploadService", "Uploading " + imageName);
+
     }
 }

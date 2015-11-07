@@ -348,5 +348,9 @@ public class MainActivity extends AppCompatActivity implements PictureCallback {
         startActivity(intent);
     }
 
+    public void launchShowActivity(View view) {
+        Intent intent = new Intent(this, ShowActivity.class);
+        startActivity(intent);
+    }
 
 }
