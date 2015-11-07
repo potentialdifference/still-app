@@ -46,18 +46,32 @@
 
         <activity
             android:name=".SoundPlayerActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_sound_player"
             android:parentActivityName=".MainActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-
             android:theme="@style/AppTheme.NoActionBar" >
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="uk.org.potentialdifference.stillapp.MainActivity" />
         </activity>
-
-
+        <activity
+            android:name=".PreshowImageViewer"
+            android:label="@string/title_activity_preshow_image_viewer"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="uk.org.potentialdifference.stillapp.PreshowImageViewer" />
+        </activity>
+        <activity
+            android:name=".PreshowImages"
+            android:label="@string/title_activity_preshow_images"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="uk.org.potentialdifference.stillapp.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
