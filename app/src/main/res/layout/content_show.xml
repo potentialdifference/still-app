@@ -10,4 +10,10 @@
     tools:showIn="@layout/activity_show"
     tools:context="uk.org.potentialdifference.stillapp.ShowActivity">
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/imageView"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>
