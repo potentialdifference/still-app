@@ -40,10 +40,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".ImageUploadService"
-            android:exported="false" />
-
         <activity
             android:name=".SoundPlayerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -72,6 +68,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="uk.org.potentialdifference.stillapp.MainActivity" />
         </activity>
+        <activity
+            android:name=".ShowActivity"
+            android:label="@string/title_activity_show"
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
+
     </application>
 
 </manifest>
