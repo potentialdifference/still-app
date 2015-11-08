@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import org.java_websocket.client.WebSocketClient;
@@ -37,8 +38,10 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //stop the screen from going to sleep:
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+
 
 
 
@@ -76,7 +79,7 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ColorDrawable cd = new ColorDrawable(Color.parseColor("#FFFFFFFF"));
+                ColorDrawable cd = new ColorDrawable(Color.parseColor("#FF000000"));
                 imageView.setImageDrawable(cd);
             }
         });
