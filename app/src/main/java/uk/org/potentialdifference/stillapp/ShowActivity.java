@@ -89,6 +89,12 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
         @Override
     public void exitShowMode() {
         //exit the activity
-        finish();
-    }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    finish();
+                }
+            });
+        }
 }

@@ -60,31 +60,10 @@ public class PreshowImages extends AppCompatActivity {
         button6.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                launchPreshowImageViewer(6);
-            }
-        });
-        Button button7 = (Button) findViewById(R.id.preshow_button_7);
-        button7.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchPreshowImageViewer(6);
+                launchPreshowImageViewer(5);
             }
         });
 
-        Button button8 = (Button) findViewById(R.id.preshow_button_8);
-        button8.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchPreshowImageViewer(7);
-            }
-        });
-        Button button9 = (Button) findViewById(R.id.preshow_button_9);
-        button9.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                launchPreshowImageViewer(8);
-            }
-        });
 
 
     }

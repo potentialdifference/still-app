@@ -18,16 +18,18 @@ public class PreshowImageViewer extends AppCompatActivity {
 
     private ViewPager pager;
     private final static Integer[] imageResourceIds = new Integer[]{
+            R.drawable.placeholder_1, R.drawable.placeholder_2, R.drawable.placeholder_3,
             R.drawable.placeholder_1, R.drawable.placeholder_2, R.drawable.placeholder_3
     };
     private final static Integer[] captionResourceIds = new Integer[]{
-            R.string.image_caption_1, R.string.image_caption_2, R.string.image_caption_3
+            R.string.image_caption_1, R.string.image_caption_2, R.string.image_caption_3,
+            R.string.image_caption_4, R.string.image_caption_5, R.string.image_caption_6
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+
         setContentView(R.layout.activity_preshow_image_viewer);
 
         Bundle extras = getIntent().getExtras();
