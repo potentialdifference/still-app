@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item type="string" name="still_imageserver_address" format="string">192.168.0.6:8080</item>
-    <item type="string" name="still_ws_address" format="string">192.168.0.6:9292</item>
+    <item type="string" name="still_server_hostname" format="string">192.168.0.16</item>
+    <item type="string" name="still_server_http_port" format="string">8081</item>
+    <item type="string" name="still_server_https_port" format="string">8080</item>
+    <item type="string" name="still_server_ws_port" format="string">9292</item>
+    <item type="string" name="still_server_auth_header" format="string">stillappkey579xtz</item>
+
+
+
 </resources>

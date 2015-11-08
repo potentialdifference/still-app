@@ -1,4 +1,4 @@
-package uk.org.potentialdifference.stillapp;
+package uk.org.potentialdifference.stillapp.preshow;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -9,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import uk.org.potentialdifference.stillapp.R;
 
 public class PreshowImageViewer extends AppCompatActivity {
     public static final String IMAGE_NUMBER_EXTRA = "uk.org.potentialdifference.stillapp.preshowImageId";

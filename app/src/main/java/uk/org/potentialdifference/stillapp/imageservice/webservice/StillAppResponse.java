@@ -1,16 +1,14 @@
-package uk.org.potentialdifference.stillapp.nodefs;
-
-import org.w3c.dom.Node;
+package uk.org.potentialdifference.stillapp.imageservice.webservice;
 
 /**
- * Created by russell on 26/10/2015.
+ * Created by russell on 07/11/2015.
  */
-public class NodeFSResponse {
+public class StillAppResponse {
 
     private String status;
     private String code;
     private String message;
-    private Object data;
+
 
     public String getStatus() {
         return status;
@@ -36,28 +34,21 @@ public class NodeFSResponse {
         this.message = message;
     }
 
-    public Object getData() {
-        return data;
-    }
-
-    public void setData(Object data) {
-        this.data = data;
-    }
 
 
 
-    public NodeFSResponse(){
+    public StillAppResponse(){
 
     }
-    public NodeFSResponse(String status, String code, String message, Object data){
+    public StillAppResponse(String status, String code, String message){
         this.status = status;
         this.code = code;
         this.message = message;
-        this.data = data;
+
     }
 
     @Override
     public String toString() {
-        return "status: "+status+"/r/ncode: "+code+"/r/nmessage:"+message+"/r/ndata"+data.toString();
+        return "status: "+status+"/r/ncode: "+code+"/r/nmessage:"+message;
     }
 }

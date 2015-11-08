@@ -20,9 +20,12 @@ import android.view.View;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
-import java.util.Date;
 
-public class SoundPlayerActivity extends AppCompatActivity implements ImageUploadDelegate{
+import uk.org.potentialdifference.stillapp.imageservice.ImageUploadDelegate;
+import uk.org.potentialdifference.stillapp.imageservice.ImageUploadTask;
+import uk.org.potentialdifference.stillapp.imageservice.UploadJob;
+
+public class SoundPlayerActivity extends AppCompatActivity implements ImageUploadDelegate {
 
 
     private static final String IMAGES_SENT_FILENAME = "still_app_images_sent";

@@ -1,4 +1,4 @@
-package uk.org.potentialdifference.stillapp;
+package uk.org.potentialdifference.stillapp.imageservice;
 
 import java.util.List;
 

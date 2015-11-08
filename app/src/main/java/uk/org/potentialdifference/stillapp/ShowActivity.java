@@ -2,6 +2,8 @@ package uk.org.potentialdifference.stillapp;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,7 +24,10 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class ShowActivity extends AppCompatActivity {
+import uk.org.potentialdifference.stillapp.imageservice.ImageDownloadDelegate;
+import uk.org.potentialdifference.stillapp.imageservice.ImageDownloadTask;
+
+public class ShowActivity extends AppCompatActivity implements StillWebsocketDelegate {
 
     private static String TAG = "ShowActivity";
     WebSocketClient mWebSocketClient;
@@ -35,14 +40,7 @@ public class ShowActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+
 
         imageView = (ImageView) findViewById(R.id.imageView);
 
@@ -51,8 +49,9 @@ public class ShowActivity extends AppCompatActivity {
 
     protected void setupWebSockets() {
         URI uri;
+
         try {
-            uri = new URI("wss://192.168.0.6:8081");
+            uri = new URI(String.format("wss://%s:%s",getString(R.string.still_server_hostname), getString(R.string.still_server_http_port)));
         } catch (URISyntaxException e) {
             Log.d(TAG, "error creating URI");
             e.printStackTrace();
@@ -60,56 +59,33 @@ public class ShowActivity extends AppCompatActivity {
         }
 
         Log.d(TAG, "creating websocket client...");
-        mWebSocketClient = new WebSocketClient(uri, new Draft_10()) {
-            @Override
-            public void onOpen(ServerHandshake serverHandshake) {
-                Log.i(TAG, "Websocket onOpen called");
-            }
-
-            @Override
-            public void onMessage(String s) {
-                Log.d(TAG, "websocket message " + s);
-                try {
-                    Log.d(TAG, "message received: " + s);
-                    JSONObject jsonObj = new JSONObject(s);
-                    String message = jsonObj.getString("message");
-                    Log.d(TAG, "got message type: " + message);
-                    if (message.equals("displayImage")) {
-                        Log.d(TAG, "setting new display image");
-                        String path = jsonObj.getString("path");
-                        final String uri = "http://192.168.0.6:8081/" + path;
-                        final Uri imageUri = Uri.parse(uri);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    Bitmap bmp = BitmapFactory.decodeStream(new java.net.URL(uri).openStream());
-                                    imageView.setImageBitmap(bmp);
-                                } catch (Exception e) {
-                                    Log.e(TAG, e.getMessage());
-                                }
-                            }
-                        });
-                        Log.d(TAG, "setting new display image to " + uri);
-                    }
-                } catch (JSONException e) {
-                    Log.e(TAG, "json exception: " + e.toString());
-                }
-            }
-
-            @Override
-            public void onClose(int i, String s, boolean b) {
-                Log.i("Websocket", "Closed " + s);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Log.i("Websocket", "Error " + e.getMessage());
-            }
-        };
+        mWebSocketClient = new StillWebsocketClient(this, uri, new Draft_10(), this);
         Log.d(TAG, "created websocket client");
         mWebSocketClient.connect();
 
     }
 
+
+    @Override
+    public void showImage(Bitmap image) {
+        imageView.setImageBitmap(image);
+    }
+
+    @Override
+    public void hideImage(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ColorDrawable cd = new ColorDrawable(Color.parseColor("#FFFFFFFF"));
+                imageView.setImageDrawable(cd);
+            }
+        });
+
+        }
+
+        @Override
+    public void exitShowMode() {
+        //exit the activity
+        finish();
+    }
 }

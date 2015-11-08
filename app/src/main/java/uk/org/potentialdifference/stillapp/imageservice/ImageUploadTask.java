@@ -1,45 +1,18 @@
-package uk.org.potentialdifference.stillapp;
+package uk.org.potentialdifference.stillapp.imageservice;
 
 import android.content.Context;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseBody;
 
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 
 import retrofit.Call;
-import retrofit.GsonConverterFactory;
-import retrofit.Retrofit;
-import uk.org.potentialdifference.stillapp.nodefs.NodeFSResponse;
-import uk.org.potentialdifference.stillapp.nodefs.NodeFSService;
-import uk.org.potentialdifference.stillapp.webservice.StillAppResponse;
-import uk.org.potentialdifference.stillapp.webservice.StillAppService;
+import uk.org.potentialdifference.stillapp.R;
+import uk.org.potentialdifference.stillapp.UserIdentifier;
+import uk.org.potentialdifference.stillapp.imageservice.webservice.StillAppResponse;
+import uk.org.potentialdifference.stillapp.imageservice.webservice.StillAppService;
 
 /**
  * Created by henry on 31/10/15.
@@ -82,7 +55,7 @@ public class ImageUploadTask extends BaseImageServiceTask<UploadJob> {
                 String name = job.getName() == null ? "" : job.getName();
 
                 RequestBody body = RequestBody.create(MediaType.parse("multipart/form-data"), imageData);
-                Call<StillAppResponse> uploadImageCall = stillAppService.uploadPrivateFile(FS_KEY, uid.getIdentifier(), name, body);
+                Call<StillAppResponse> uploadImageCall = stillAppService.uploadPrivateFile(context.getString(R.string.still_server_auth_header), uid.getIdentifier(), name, body);
 
                 Response uploadImageResponse = uploadImageCall.execute().raw();
                 Log.i(TAG, "response from upload image: " + uploadImageResponse.toString());

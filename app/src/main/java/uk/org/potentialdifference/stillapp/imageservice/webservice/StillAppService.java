@@ -1,4 +1,4 @@
-package uk.org.potentialdifference.stillapp.webservice;
+package uk.org.potentialdifference.stillapp.imageservice.webservice;
 
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ResponseBody;

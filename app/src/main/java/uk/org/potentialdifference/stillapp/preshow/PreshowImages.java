@@ -1,16 +1,14 @@
-package uk.org.potentialdifference.stillapp;
+package uk.org.potentialdifference.stillapp.preshow;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
 
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import uk.org.potentialdifference.stillapp.R;
 
 public class PreshowImages extends AppCompatActivity {
 

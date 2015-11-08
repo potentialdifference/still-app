@@ -1,4 +1,4 @@
-package uk.org.potentialdifference.stillapp;
+package uk.org.potentialdifference.stillapp.imageservice;
 
 import android.content.Context;
 import android.net.wifi.WifiInfo;
@@ -24,18 +24,19 @@ import javax.net.ssl.TrustManagerFactory;
 
 import retrofit.GsonConverterFactory;
 import retrofit.Retrofit;
-import uk.org.potentialdifference.stillapp.webservice.StillAppService;
+import uk.org.potentialdifference.stillapp.R;
+import uk.org.potentialdifference.stillapp.imageservice.webservice.StillAppService;
 
 /**
  * Created by russell on 07/11/2015.
  */
 public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
 
-    protected static final String SERVER_PROTOCOL = "https";
+    /*protected static final String SERVER_PROTOCOL = "https";
     protected static final String SERVER_HOSTNAME = "192.168.0.16";
     protected static final String SERVER_PORT = "8080";
 
-    protected static final String FS_KEY = "stillappkey579xtz";
+    protected static final String FS_KEY = "stillappkey579xtz";*/
     protected static final String[] SAFE_NETWORK_SSIDS = {"roomie", "still"};
 
 
@@ -46,14 +47,14 @@ public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
 
     protected StillAppService getService(Context context){
 
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(String.format("%s://%s:%s", SERVER_PROTOCOL, SERVER_HOSTNAME, SERVER_PORT))
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(String.format("%s://%s:%s", "https", context.getString(R.string.still_server_hostname), context.getString(R.string.still_server_https_port)))
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(getSslClient(context))
                 .build();
         return retrofit.create(StillAppService.class);
     }
 
-    protected static OkHttpClient getSslClient(Context context){
+    protected static OkHttpClient getSslClient(final Context context){
 
         OkHttpClient client = new OkHttpClient();
 
@@ -85,7 +86,7 @@ public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
             client.setHostnameVerifier(new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
-                    if(hostname.equals(SERVER_HOSTNAME)){
+                    if(hostname.equals(context.getString(R.string.still_server_hostname))){
                         return true;
                     }
                     else {

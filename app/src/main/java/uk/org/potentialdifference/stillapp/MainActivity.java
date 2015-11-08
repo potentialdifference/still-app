@@ -6,12 +6,9 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -19,18 +16,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import uk.org.potentialdifference.stillapp.imageservice.ImageUploadDelegate;
+import uk.org.potentialdifference.stillapp.imageservice.ImageUploadTask;
+import uk.org.potentialdifference.stillapp.imageservice.UploadJob;
+import uk.org.potentialdifference.stillapp.preshow.PreshowImages;
 
 public class MainActivity extends AppCompatActivity implements PictureCallback {
 
@@ -235,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements PictureCallback {
                             } catch (Exception e) {
                                 Log.e(TAG, "ImageUploadTask interrupted");
                             }
-                            // new PhotoUploader().uploadBytes(mActivity, "rear", bytes);
+
                         } else {
                             Log.d(TAG, "Couldn't create bitmap from photo");
                             Toast.makeText(this, "Couldn't create bitmap from photo", Toast.LENGTH_SHORT).show();
