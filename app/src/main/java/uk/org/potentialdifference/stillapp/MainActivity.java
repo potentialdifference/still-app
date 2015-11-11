@@ -13,10 +13,18 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -33,41 +41,32 @@ import uk.org.potentialdifference.stillapp.preshow.PreshowImages;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String IMAGES_SENT_FILENAME = "still_app_images_sent";
+    private static final String IMAGES_SENT_FILENAME = "uk.org.potentialdifference.stillapp.images_sent";
+    private static final String PRIVACY_POLICY_ACCEPTED = "uk.org.potentialdifference.stillapp.privacy_policy_accepted";
 
     final String TAG = "MainActivity";
 
-
-
-
-
-
-
-
-
-
-
-
+    private static final boolean showPrivacyPolicyInline = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
-
-
-
         setContentView(R.layout.activity_main);
 
+        if(!showPrivacyPolicyInline){
 
-    }
+            TextView privacyTitle = (TextView) findViewById(R.id.privacyPolicyTitle);
+            privacyTitle.setText(Html.fromHtml(String.format("%s<br/><a href=\"%s\">View privacy policy</a>",getText(R.string.privacy_policy_title),getText(R.string.privacy_policy_url)                    )));
+            privacyTitle.setMovementMethod(LinkMovementMethod.getInstance());
+            WebView privacyWebView = (WebView) findViewById(R.id.privacyPolicyWebView);
+            privacyWebView.setVisibility(View.INVISIBLE);
+        }
 
 
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        Log.d(TAG, "onStart");
-        if(!hasSentImages()) {
+        handleViewSelection();
+        //todo: and check we're online
+        if(hasAcceptedPrivacyPolicy() && !hasSentImages()){
             grabAndSendImages();
         }
     }
@@ -77,18 +76,20 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy");
+
+
+
+private boolean hasAcceptedPrivacyPolicy(){
+    boolean hasAccepted = true;
+
+    try {
+        openFileInput(PRIVACY_POLICY_ACCEPTED);
+    } catch (Exception ignore) {
+        hasAccepted = false;
     }
 
-
-
-
-
-
-
-
+    return hasAccepted;
+}
 
     private boolean hasSentImages() {
         boolean hasSent = true;
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception e) {
                     }
                 }
-            }).execute(jobs).get();
+            }).execute(jobs);
         } catch (Exception e) {
             Log.e(TAG, "ImageUploadTask interrupted");
         }
@@ -184,6 +185,75 @@ public class MainActivity extends AppCompatActivity {
     public void launchShowActivity(View view) {
         Intent intent = new Intent(this, ShowActivity.class);
         startActivity(intent);
+    }
+
+    public void acceptPrivacyPolicy(View view) {
+        try {
+            String accepted = "";
+            FileOutputStream fos = openFileOutput(PRIVACY_POLICY_ACCEPTED, Context.MODE_PRIVATE);
+            fos.write(accepted.getBytes());
+            fos.close();
+        } catch (Exception e) {
+        }
+        handleViewSelection();
+    }
+
+    private void handleViewSelection(){
+        ViewFlipper viewFlipper = (ViewFlipper) findViewById(R.id.viewFlipper);
+        int currentId = viewFlipper.getCurrentView().getId();
+        if(!hasAcceptedPrivacyPolicy()){
+            //show privacy view
+            if(currentId!=R.id.privacyPolicyLayout){
+                viewFlipper.showPrevious();
+
+            }
+            WebView privacyWebView = (WebView) findViewById(R.id.privacyPolicyWebView);
+            privacyWebView.setWebViewClient(new WebViewClient(){
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    return false;
+                }
+            });
+            privacyWebView.loadUrl(getString(R.string.privacy_policy_url));
+        }
+        else{
+            //show welcome view
+            viewFlipper.setAnimation(AnimationUtils.loadAnimation(this, R.anim.switch_view));
+            viewFlipper.getAnimation().setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    if(!hasSentImages()){
+                        grabAndSendImages();
+                    }
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+            if(currentId!=R.id.layoutWelcome){
+                viewFlipper.showNext();
+            }
+
+
+
+        }
+    }
+
+    private class PrivacyPolicyWebViewClient extends WebViewClient {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+                return false;
+
+
+        }
     }
 
 }

@@ -45,8 +45,7 @@ public class StillWebsocketClient extends WebSocketClient implements ImageDownlo
                 Log.d(TAG, "setting new display image");
                 ImageDownloadTask downloadTask = new ImageDownloadTask(context, this);
                 String path = jsonObj.getString("path");
-                final String uri = String.format("http://%s:%s%s", context.getString(R.string.still_server_hostname), context.getString(R.string.still_server_http_port), path);
-                downloadTask.execute(uri);
+                downloadTask.execute(path);
 
                 Log.d(TAG, "setting new display image to " + uri);
             }

@@ -14,6 +14,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import retrofit.Call;
+import uk.org.potentialdifference.stillapp.R;
 import uk.org.potentialdifference.stillapp.imageservice.webservice.StillAppService;
 
 /**
@@ -34,37 +35,28 @@ public class ImageDownloadTask extends BaseImageServiceTask<String>{
 
     @Override
     protected Void doInBackground(String... params) {
-/*
+
         boolean safe = isConnectedToSafeWifi(context);
         if (!safe) {
             Log.d(TAG, "not connected to safe wifi network");
             return null;
         }
         StillAppService stillAppService = getService(context);
-        String url = params[0];
-        String path = url;
-        if(url.contains("public/")){
-            path = url.substring(7);
+        String path = params[0];
+        if(path.startsWith("/")){
+            path = path.substring(1);
         }
-        Call<ResponseBody> getImageCall = stillAppService.getPublicFile("WP_20150531_013.jpg");
+        Call<ResponseBody> getImageCall = stillAppService.getPublicFile(context.getString(R.string.still_server_private_auth_header), path);
         Response response = null;
         try {
             response = getImageCall.execute().raw();
-            imageBytes = response.body().bytes();
+            byte[] imageBytes = response.body().bytes();
+            image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
         } catch (IOException e) {
             Log.e(TAG, "Error downloading file", e);
         }
 
-*/
-        try {
-            URL uri = new URL(params[0]);
-            URLConnection ucon = uri.openConnection();
-            image = BitmapFactory.decodeStream(ucon.getInputStream());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
 
 
         return null;

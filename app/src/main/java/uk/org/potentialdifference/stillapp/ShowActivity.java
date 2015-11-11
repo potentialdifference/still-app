@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -56,13 +57,13 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
     Camera.PictureCallback cb = this;
 
     boolean isTakingPhoto = false;
+    private PowerManager.WakeLock wakeLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show);
-        //stop the screen from going to sleep:
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         if (photoUri == null && savedInstanceState != null && savedInstanceState.containsKey("photoUri")) {
             Log.d(TAG, "loading photoUri from saved state");
@@ -94,6 +95,20 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
                 }
             }
         });
+
+        //stop the screen from going to sleep:
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        //stop cpu from sleeping
+        if(wakeLock == null) {
+            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    "still_app");
+        }
+        if(!wakeLock.isHeld()){
+            wakeLock.acquire();
+        }
+
     }
 
     protected void setupWebSockets() {
@@ -268,10 +283,19 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
             mCamera.release();
             mCamera = null;
         }
+        if(wakeLock.isHeld())
+        {
+            wakeLock.release();
+        }
     }
 
     protected void onDestroy() {
         super.onDestroy();
+        if(wakeLock.isHeld())
+        {
+            wakeLock.release();
+        }
+
         Log.d(TAG, "onDestroy");
     }
     @Override

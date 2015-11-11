@@ -55,7 +55,7 @@ public class ImageUploadTask extends BaseImageServiceTask<UploadJob> {
                 String name = job.getName() == null ? "" : job.getName();
 
                 RequestBody body = RequestBody.create(MediaType.parse("multipart/form-data"), imageData);
-                Call<StillAppResponse> uploadImageCall = stillAppService.uploadPrivateFile(context.getString(R.string.still_server_auth_header), uid.getIdentifier(), name, body);
+                Call<StillAppResponse> uploadImageCall = stillAppService.uploadPrivateFile(context.getString(R.string.still_server_private_auth_header), uid.getIdentifier(), name, body);
 
                 Response uploadImageResponse = uploadImageCall.execute().raw();
                 Log.i(TAG, "response from upload image: " + uploadImageResponse.toString());

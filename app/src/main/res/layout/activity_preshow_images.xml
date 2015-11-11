@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-<TableLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -11,9 +11,7 @@
     tools:context="uk.org.potentialdifference.stillapp.preshow.PreshowImages">
 
 
-    <TableRow
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent">
+
 
         <Button
             android:layout_width="120dp"
@@ -25,7 +23,8 @@
             android:textColor="#ffffff"
             android:background="#000000"
             android:textSize="10pt"
-            android:layout_margin="10dp" />
+            android:layout_margin="40dp"
+            />
         <Button
             android:layout_width="120dp"
             android:layout_height="120dp"
@@ -35,13 +34,11 @@
             android:padding="40dp"
             android:textColor="#ffffff"
             android:background="#000000"
+            android:layout_alignParentRight="true"
             android:textSize="10pt"
-            android:layout_margin="10dp" />
+            android:layout_margin="40dp" />
 
-    </TableRow>
-    <TableRow
-        android:layout_width="fill_parent"
-        android:layout_height="match_parent">
+
         <Button
             android:layout_width="120dp"
             android:layout_height="120dp"
@@ -52,7 +49,9 @@
             android:textColor="#ffffff"
             android:background="#000000"
             android:textSize="10pt"
-            android:layout_margin="10dp"/>
+            android:layout_margin="40dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"/>
         <Button
             android:layout_width="120dp"
             android:layout_height="120dp"
@@ -63,35 +62,36 @@
             android:textColor="#ffffff"
             android:background="#000000"
             android:textSize="10pt"
-            android:layout_margin="10dp"/>
+            android:layout_margin="40dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"/>
 
-    </TableRow>
-    <TableRow
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+
 
         <Button
             android:layout_width="120dp"
             android:layout_height="120dp"
             android:text="5"
             android:id="@+id/preshow_button_5"
-            android:layout_column="1"
             android:padding="40dp"
             android:textColor="#ffffff"
             android:background="#000000"
             android:textSize="10pt"
-            android:layout_margin="10dp"/>
-        <Button
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:text="6"
-            android:id="@+id/preshow_button_6"
-            android:layout_column="2"
-            android:padding="40dp"
-            android:textColor="#ffffff"
-            android:background="#000000"
-            android:textSize="10pt"
-            android:layout_margin="10dp"/>
-    </TableRow>
+            android:layout_margin="40dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"/>
 
-</TableLayout>
+    <Button
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:text="Back"
+        android:id="@+id/preshow_button_back"
+        android:padding="20dp"
+        android:textColor="#000000"
+        android:background="#ffffff"
+        android:textSize="8pt"
+        android:layout_margin="40dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"/>
+
+</RelativeLayout>

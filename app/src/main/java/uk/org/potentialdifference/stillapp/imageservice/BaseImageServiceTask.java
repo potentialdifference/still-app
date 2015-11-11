@@ -32,12 +32,8 @@ import uk.org.potentialdifference.stillapp.imageservice.webservice.StillAppServi
  */
 public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
 
-    /*protected static final String SERVER_PROTOCOL = "https";
-    protected static final String SERVER_HOSTNAME = "192.168.0.16";
-    protected static final String SERVER_PORT = "8080";
 
-    protected static final String FS_KEY = "stillappkey579xtz";*/
-    protected static final String[] SAFE_NETWORK_SSIDS = {"roomie", "still"};
+    protected static final String[] SAFE_NETWORK_SSIDS = {"roomie", "VivianMaier"};
 
 
 

@@ -18,12 +18,12 @@ public class PreshowImageViewer extends AppCompatActivity {
 
     private ViewPager pager;
     private final static Integer[] imageResourceIds = new Integer[]{
-            R.drawable.placeholder_1, R.drawable.placeholder_2, R.drawable.placeholder_3,
-            R.drawable.placeholder_1, R.drawable.placeholder_2, R.drawable.placeholder_3
+            R.drawable.preshow_1, R.drawable.preshow_2, R.drawable.preshow_3,
+            R.drawable.preshow_4, R.drawable.preshow_5
     };
     private final static Integer[] captionResourceIds = new Integer[]{
             R.string.image_caption_1, R.string.image_caption_2, R.string.image_caption_3,
-            R.string.image_caption_4, R.string.image_caption_5, R.string.image_caption_6
+            R.string.image_caption_4, R.string.image_caption_5
     };
 
     @Override
