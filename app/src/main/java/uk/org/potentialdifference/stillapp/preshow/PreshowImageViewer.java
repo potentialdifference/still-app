@@ -39,11 +39,11 @@ public class PreshowImageViewer extends AppCompatActivity {
         int captionResId = 0;
         int imageResId = 0;
 
-        if(imageNumber>=0 && imageNumber<this.captionResourceIds.length){
-            captionResId = this.captionResourceIds[imageNumber];
+        if(imageNumber>=0 && imageNumber< captionResourceIds.length){
+            captionResId = captionResourceIds[imageNumber];
         }
-        if(imageNumber>=0 && imageNumber<this.imageResourceIds.length){
-            imageResId= this.imageResourceIds[imageNumber];
+        if(imageNumber>=0 && imageNumber< imageResourceIds.length){
+            imageResId= imageResourceIds[imageNumber];
         }
 
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="uk.org.potentialdifference.stillapp" >
+    package="uk.co.the-future-is-unwritten.stillapp" >
 
     <uses-sdk
         android:minSdkVersion="15"

@@ -82,12 +82,7 @@ public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
             client.setHostnameVerifier(new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
-                    if(hostname.equals(context.getString(R.string.still_server_hostname))){
-                        return true;
-                    }
-                    else {
-                        return false;
-                    }
+                    return hostname.equals(context.getString(R.string.still_server_hostname));
                 }
             });
 
