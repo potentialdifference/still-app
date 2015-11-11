@@ -99,7 +99,7 @@ public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
 
     }
 
-    protected boolean isConnectedToSafeWifi(Context context){
+    public static boolean isConnectedToSafeWifi(Context context){
         boolean safe = false;
         String wifiId = getWifiSSID(context);
         for (String id : SAFE_NETWORK_SSIDS) {
@@ -110,7 +110,7 @@ public abstract class BaseImageServiceTask<T> extends AsyncTask<T, Void, Void> {
         }
         return safe;
     }
-    protected String getWifiSSID(Context context){
+    protected static String getWifiSSID(Context context){
         String ssid = "";
         final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         final WifiInfo connectionInfo = wifiManager.getConnectionInfo();

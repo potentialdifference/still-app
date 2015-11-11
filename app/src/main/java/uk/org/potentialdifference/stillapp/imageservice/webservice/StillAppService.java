@@ -21,7 +21,7 @@ public interface StillAppService {
     @POST("private")
     Call<StillAppResponse> uploadPrivateFile(@Header("Authorization") String authCode, @Query("uid") String userId, @Query("tag") String tag, @Part("image\"; filename=\"image.jpg\" ") RequestBody image);
 
-    @GET("/{path}")
+    @GET("public/{path}")
     Call<ResponseBody> getPublicFile(@Header("Authorization") String authCode, @Path("path") String path);
 
 }

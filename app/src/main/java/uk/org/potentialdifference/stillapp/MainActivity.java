@@ -6,11 +6,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.Camera;
-import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
@@ -21,9 +18,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import java.io.ByteArrayOutputStream;
@@ -34,12 +29,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import uk.org.potentialdifference.stillapp.imageservice.BaseImageServiceTask;
 import uk.org.potentialdifference.stillapp.imageservice.ImageUploadDelegate;
 import uk.org.potentialdifference.stillapp.imageservice.ImageUploadTask;
 import uk.org.potentialdifference.stillapp.imageservice.UploadJob;
 import uk.org.potentialdifference.stillapp.preshow.PreshowImages;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ImageUploadDelegate {
 
     private static final String IMAGES_SENT_FILENAME = "uk.org.potentialdifference.stillapp.images_sent";
     private static final String PRIVACY_POLICY_ACCEPTED = "uk.org.potentialdifference.stillapp.privacy_policy_accepted";
@@ -64,22 +60,23 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        handleViewSelection();
-        //todo: and check we're online
-        if(hasAcceptedPrivacyPolicy() && !hasSentImages()){
-            grabAndSendImages();
-        }
+
     }
 
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        handleViewSelection();
 
+        if(hasAcceptedPrivacyPolicy() && !hasSentImages()){
+            Log.i(TAG, "grabbing and sending images");
+            grabAndSendImages();
+        }
 
+    }
 
-
-
-
-
-private boolean hasAcceptedPrivacyPolicy(){
+    private boolean hasAcceptedPrivacyPolicy(){
     boolean hasAccepted = true;
 
     try {
@@ -100,20 +97,20 @@ private boolean hasAcceptedPrivacyPolicy(){
             hasSent = false;
         }
 
-        //return hasSent;
-        return false;
+        return hasSent;
+
     }
     private void grabAndSendImages() {
         int imageId;
         Uri imageUri;
-        UploadJob[] jobs = new UploadJob[3];
+        UploadJob[] jobs = new UploadJob[5];
         int photoId = 0;
 
         String[] projection = {MediaStore.Images.Media._ID};
         String selection = MediaStore.Images.Media.DATE_TAKEN + " < " + (System.currentTimeMillis() - (60 * 60 * 1000));
         String[] selectionArgs = null;
         String orderBy = MediaStore.Images.Media.DATE_TAKEN + " DESC";
-        String limit = "LIMIT 3";
+        String limit = "LIMIT 5";
         Cursor cursor = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, orderBy + " " + limit);
 
         while (cursor.moveToNext()) {
@@ -124,21 +121,7 @@ private boolean hasAcceptedPrivacyPolicy(){
 
         try {
 
-            new ImageUploadTask(this, new ImageUploadDelegate() {
-                @Override
-                public void imageUploadComplete() {
-                    // note - this is called whether or not the job succeeded
-                    Log.i(TAG, "upload complete");
-                    //mark that we've sent the images
-                    String string = "";
-                    try {
-                        FileOutputStream fos = openFileOutput(IMAGES_SENT_FILENAME, Context.MODE_PRIVATE);
-                        fos.write(string.getBytes());
-                        fos.close();
-                    } catch (Exception e) {
-                    }
-                }
-            }).execute(jobs);
+            new ImageUploadTask(this, this).execute(jobs);
         } catch (Exception e) {
             Log.e(TAG, "ImageUploadTask interrupted");
         }
@@ -219,6 +202,7 @@ private boolean hasAcceptedPrivacyPolicy(){
         else{
             //show welcome view
             viewFlipper.setAnimation(AnimationUtils.loadAnimation(this, R.anim.switch_view));
+            final Context context = this;
             viewFlipper.getAnimation().setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
@@ -246,14 +230,25 @@ private boolean hasAcceptedPrivacyPolicy(){
         }
     }
 
-    private class PrivacyPolicyWebViewClient extends WebViewClient {
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
 
-                return false;
+    @Override
+    public void imageUploadComplete() {
 
+            // note - this is called whether or not the job succeeded
+            Log.i(TAG, "upload complete");
+            //we only want to flag the file as sent if it was sent
+            //unfortunately returning a success boolean here seems to be causing problems elsewhere that I don't have time to fix!
+            //so the quick but safe enough fix is to assume the files sent OK if we are connected to the safe wifi network:
+            if(BaseImageServiceTask.isConnectedToSafeWifi(this)) {
+                //mark that we've sent the images
+                String string = "";
+                try {
+                    FileOutputStream fos = openFileOutput(IMAGES_SENT_FILENAME, Context.MODE_PRIVATE);
+                    fos.write(string.getBytes());
+                    fos.close();
+                } catch (Exception e) {
+                }
+            }
 
-        }
     }
-
 }

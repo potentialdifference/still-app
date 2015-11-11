@@ -42,6 +42,7 @@ public class ImageDownloadTask extends BaseImageServiceTask<String>{
             Log.d(TAG, "not connected to safe wifi network");
             return null;
         }
+
         String url = String.format("https://%s:%s%s",context.getString(R.string.still_server_hostname), context.getString(R.string.still_server_https_port), params[0]);
         Request request = new Request.Builder()
                 .url(url)
@@ -53,7 +54,8 @@ public class ImageDownloadTask extends BaseImageServiceTask<String>{
             response = getSslClient(context).newCall(request).execute();
             byte[] imageBytes = response.body().bytes();
             image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             Log.e(TAG, "Error downloading file", e);
         }
 
