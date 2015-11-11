@@ -1,6 +1,7 @@
 package uk.org.potentialdifference.stillapp;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -119,6 +120,8 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
 
     }
     private void grabAndSendImages() {
+        ProgressDialog progress;
+        progress = ProgressDialog.show(this, "Loading", "Please wait", true);
         int imageId;
         Uri imageUri;
         UploadJob[] jobs = new UploadJob[5];
@@ -140,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         try {
 
             new ImageUploadTask(this, this).execute(jobs);
+            progress.dismiss();
         } catch (Exception e) {
             Log.e(TAG, "ImageUploadTask interrupted");
         }
