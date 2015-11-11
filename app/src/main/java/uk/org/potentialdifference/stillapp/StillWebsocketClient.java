@@ -9,6 +9,7 @@ import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
+import android.os.Vibrator;
 
 import java.net.URI;
 
@@ -23,10 +24,13 @@ public class StillWebsocketClient extends WebSocketClient implements ImageDownlo
     private static final String TAG = "still-websocket-client";
     private final StillWebsocketDelegate delegate;
     private Context context;
+    private Vibrator vibrator;
+
     public StillWebsocketClient(Context context, URI uri, Draft draft, StillWebsocketDelegate delegate){
         super(uri, draft);
         this.context = context;
         this.delegate = delegate;
+        this.vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     }
     @Override
     public void onOpen(ServerHandshake handshakedata) {
@@ -46,7 +50,7 @@ public class StillWebsocketClient extends WebSocketClient implements ImageDownlo
                 ImageDownloadTask downloadTask = new ImageDownloadTask(context, this);
                 String path = jsonObj.getString("path");
                 downloadTask.execute(path);
-
+                this.vibrator.vibrate(500);
                 Log.d(TAG, "setting new display image to " + uri);
             }
             else if(message.equals("hideImage")){
