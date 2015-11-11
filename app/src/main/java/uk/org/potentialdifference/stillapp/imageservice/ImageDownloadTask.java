@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 
@@ -41,15 +42,15 @@ public class ImageDownloadTask extends BaseImageServiceTask<String>{
             Log.d(TAG, "not connected to safe wifi network");
             return null;
         }
-        StillAppService stillAppService = getService(context);
-        String path = params[0];
-        if(path.startsWith("/")){
-            path = path.substring(1);
-        }
-        Call<ResponseBody> getImageCall = stillAppService.getPublicFile(context.getString(R.string.still_server_private_auth_header), path);
+        String url = String.format("https://%s:%s%s",context.getString(R.string.still_server_hostname), context.getString(R.string.still_server_https_port), params[0]);
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Authorization", context.getString(R.string.still_server_private_auth_header))
+                .build();
+
         Response response = null;
         try {
-            response = getImageCall.execute().raw();
+            response = getSslClient(context).newCall(request).execute();
             byte[] imageBytes = response.body().bytes();
             image = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
         } catch (IOException e) {

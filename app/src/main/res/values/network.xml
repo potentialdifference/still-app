@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item type="string" name="still_server_hostname" format="string">192.168.0.9</item>
+    <item type="string" name="still_server_hostname" format="string">192.168.2.23</item>
     <item type="string" name="still_server_http_port" format="string">8081</item>
     <item type="string" name="still_server_https_port" format="string">8080</item>
-    <item type="string" name="still_server_private_auth_header" format="string">k4S20M1Hdw579xtz</item>
+    <item type="string" name="still_server_private_auth_header" format="string">stillappkey579xtz</item>
     <item type="string" name="privacy_policy_url" format="string">http://en-gb.facebook.com/privacy/explanation</item>
 
 
