@@ -1,6 +1,7 @@
 package uk.org.potentialdifference.stillapp.preshow;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 
 
@@ -19,7 +20,7 @@ public class PreshowImages extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preshow_images);
 
-
+        Typeface font = Typeface.createFromAsset(getAssets(), "american-typewriter.ttf");
 
         Button button1 = (Button) findViewById(R.id.preshow_button_1);
         button1.setOnClickListener(new View.OnClickListener() {
@@ -57,6 +58,7 @@ public class PreshowImages extends AppCompatActivity {
             }
         });
         Button back  = (Button) findViewById(R.id.preshow_button_back);
+        back.setTypeface(font);
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

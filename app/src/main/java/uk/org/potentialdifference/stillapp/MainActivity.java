@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -18,6 +19,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
@@ -49,10 +51,26 @@ public class MainActivity extends AppCompatActivity implements ImageUploadDelega
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_main);
+        TextView privacyTitle = (TextView) findViewById(R.id.privacyPolicyTitle);
+        Typeface font = Typeface.createFromAsset(getAssets(), "american-typewriter.ttf");
+        privacyTitle.setTypeface(font);
+
+        TextView welcomeTitle = (TextView) findViewById(R.id.tWelcome);
+        welcomeTitle.setTypeface(font);
+
+        Button acceptPolicyButton = (Button) findViewById(R.id.acceptPrivacyPolicyButton);
+        acceptPolicyButton.setTypeface(font);
+
+        Button startShowButton = (Button) findViewById(R.id.bShow);
+        startShowButton.setTypeface(font);
+
+        Button startPreshowButton = (Button) findViewById(R.id.bPreshow);
+        startPreshowButton.setTypeface(font);
 
         if(!showPrivacyPolicyInline){
 
-            TextView privacyTitle = (TextView) findViewById(R.id.privacyPolicyTitle);
+
+
             privacyTitle.setText(Html.fromHtml(String.format("%s<br/><a href=\"%s\">View privacy policy</a>",getText(R.string.privacy_policy_title),getText(R.string.privacy_policy_url)                    )));
             privacyTitle.setMovementMethod(LinkMovementMethod.getInstance());
             WebView privacyWebView = (WebView) findViewById(R.id.privacyPolicyWebView);

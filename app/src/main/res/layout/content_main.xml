@@ -29,7 +29,10 @@
             android:onClick="acceptPrivacyPolicy"
             android:text="I accept the terms of the privacy policy"
             android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true">
+            android:layout_centerHorizontal="true"
+            android:textSize="14dp"
+            android:textColor="#FFFFFF"
+            android:background="#000000">
 
         </Button>
 
@@ -49,33 +52,38 @@
         <TextView android:text="@string/text_welcome"
             android:id="@+id/tWelcome"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textSize="20dp" />
 
         <Button
             android:id="@+id/bPreshow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:layout_below="@+id/tWelcome"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="29dp"
             android:gravity="center"
             android:text="@string/button_preshow"
             android:onClick="launchPreshowActivity"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:textColor="#ffffff"
+            android:background="#000000" />
 
 
 
         <Button
             android:id="@+id/bShow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:layout_below="@+id/bPreshow"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="29dp"
             android:gravity="center"
             android:text="@string/button_show"
             android:onClick="launchShowActivity"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:textColor="#ffffff"
+            android:background="#000000" />
     </RelativeLayout>
 </ViewFlipper>
 

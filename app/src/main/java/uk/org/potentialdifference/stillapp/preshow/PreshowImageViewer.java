@@ -7,6 +7,8 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -50,10 +52,23 @@ public class PreshowImageViewer extends AppCompatActivity {
         imageView.setImageResource(imageResId);
 
 
-        TextView txt = (TextView) findViewById(R.id.preshow_caption);
+
         Typeface font = Typeface.createFromAsset(getAssets(), "american-typewriter.ttf");
-        txt.setTypeface(font);
-        txt.setText(captionResId);
+
+        //go back on caption tap:
+        TextView caption = (TextView) findViewById(R.id.preshow_caption);
+        caption.setTypeface(font);
+        caption.setText(captionResId);
+
+        caption.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+
+
 
     }
     @Override

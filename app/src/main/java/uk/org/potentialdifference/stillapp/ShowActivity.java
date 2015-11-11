@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
 import android.net.Uri;
@@ -83,6 +84,8 @@ public class ShowActivity extends AppCompatActivity implements StillWebsocketDel
 
         mActivity = this;
         Button button = (Button) findViewById(R.id.take_photo);
+        Typeface font = Typeface.createFromAsset(getAssets(), "american-typewriter.ttf");
+        button.setTypeface(font);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
